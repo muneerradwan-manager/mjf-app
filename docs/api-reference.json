@@ -1,0 +1,1347 @@
+{
+  "info": {
+    "title": "MJF App — Multi-Tenant Educational Platform API",
+    "version": "1.0.0",
+    "base_url": "http://localhost:8000",
+    "description": "Full API reference for the MJF multi-tenant educational platform. All tenant routes require a valid Sanctum Bearer token and an active current_tenant_id set on the authenticated user.",
+    "authentication": {
+      "type": "Bearer Token (Laravel Sanctum)",
+      "header": "Authorization: Bearer {token}",
+      "obtain_token": "POST /api/login"
+    },
+    "response_envelope": {
+      "description": "All responses are wrapped in a standard envelope.",
+      "success": {
+        "status": true,
+        "message": "Human-readable message",
+        "data": "object | array | null"
+      },
+      "error": {
+        "status": false,
+        "message": "Human-readable error message"
+      }
+    }
+  },
+  "groups": [
+    {
+      "name": "Health",
+      "routes": [
+        {
+          "id": "health.check",
+          "method": "GET",
+          "url": "/api/health",
+          "auth_required": false,
+          "description": "Check if the API is up and running.",
+          "request": {
+            "headers": {},
+            "body": null
+          },
+          "responses": {
+            "200": {
+              "status": "ok"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Central — Authentication",
+      "routes": [
+        {
+          "id": "auth.login",
+          "method": "POST",
+          "url": "/api/login",
+          "auth_required": false,
+          "description": "Authenticate a central user and receive a Sanctum Bearer token.",
+          "request": {
+            "headers": {
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            },
+            "body": {
+              "email": "admin@example.com",
+              "password": "password123"
+            },
+            "validation": {
+              "email": "required|email",
+              "password": "required|string"
+            }
+          },
+          "responses": {
+            "200": {
+              "status": true,
+              "message": "Login successful",
+              "data": {
+                "token": "1|abc123xyz...",
+                "token_type": "Bearer",
+                "user": {
+                  "id": 1,
+                  "name": "Admin User",
+                  "email": "admin@example.com",
+                  "is_super_admin": true,
+                  "current_tenant_id": null,
+                  "current_tenant": null,
+                  "tenants": []
+                }
+              }
+            },
+            "401": {
+              "status": false,
+              "message": "Invalid credentials."
+            },
+            "422": {
+              "message": "The email field is required.",
+              "errors": {
+                "email": ["The email field is required."]
+              }
+            }
+          }
+        },
+        {
+          "id": "auth.me",
+          "method": "GET",
+          "url": "/api/me",
+          "auth_required": true,
+          "description": "Get the currently authenticated user with their active tenant and accessible tenants list.",
+          "request": {
+            "headers": {
+              "Authorization": "Bearer {token}",
+              "Accept": "application/json"
+            },
+            "body": null
+          },
+          "responses": {
+            "200": {
+              "status": true,
+              "message": "Authenticated user",
+              "data": {
+                "id": 1,
+                "name": "Admin User",
+                "email": "admin@example.com",
+                "is_super_admin": false,
+                "current_tenant_id": 2,
+                "current_tenant": {
+                  "id": 2,
+                  "name": "Al-Nour School",
+                  "slug": "al-nour-school"
+                },
+                "tenants": [
+                  {
+                    "id": 2,
+                    "name": "Al-Nour School",
+                    "slug": "al-nour-school",
+                    "role": "admin"
+                  }
+                ]
+              }
+            },
+            "401": {
+              "message": "Unauthenticated."
+            }
+          }
+        },
+        {
+          "id": "auth.logout",
+          "method": "POST",
+          "url": "/api/logout",
+          "auth_required": true,
+          "description": "Revoke the current access token.",
+          "request": {
+            "headers": {
+              "Authorization": "Bearer {token}",
+              "Accept": "application/json"
+            },
+            "body": null
+          },
+          "responses": {
+            "200": {
+              "status": true,
+              "message": "Logout successful",
+              "data": null
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Central — Tenants",
+      "routes": [
+        {
+          "id": "central.tenants.store",
+          "method": "POST",
+          "url": "/api/central/tenants",
+          "auth_required": true,
+          "description": "Create a new tenant. Automatically provisions a dedicated database and runs tenant migrations. The authenticated user becomes the owner.",
+          "request": {
+            "headers": {
+              "Authorization": "Bearer {token}",
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            },
+            "body": {
+              "name": "Al-Nour School",
+              "slug": "al-nour-school",
+              "code": "ALNOUR01",
+              "email": "info@alnour.edu",
+              "phone": "+966501234567",
+              "subscription_id": 1,
+              "type": "school"
+            },
+            "validation": {
+              "name": "required|string|max:255",
+              "slug": "required|string|unique:tenants,slug",
+              "code": "required|string|unique:tenants,code",
+              "email": "required|email|unique:tenants,email",
+              "phone": "nullable|string",
+              "subscription_id": "required|integer|exists:subscriptions,id",
+              "type": "required|in:masjed,school,university"
+            }
+          },
+          "responses": {
+            "200": {
+              "status": true,
+              "message": "Tenant created successfully",
+              "data": {
+                "id": 1,
+                "uuid": "550e8400-e29b-41d4-a716-446655440000",
+                "name": "Al-Nour School",
+                "slug": "al-nour-school",
+                "code": "ALNOUR01",
+                "email": "info@alnour.edu",
+                "phone": "+966501234567",
+                "type": "school",
+                "db_name": "tenant_al_nour_school",
+                "is_active": true,
+                "owner_user_id": 1,
+                "subscription_id": 1,
+                "created_at": "2026-04-15T10:00:00.000000Z",
+                "updated_at": "2026-04-15T10:00:00.000000Z"
+              }
+            },
+            "401": { "message": "Unauthenticated." },
+            "422": {
+              "message": "The slug has already been taken.",
+              "errors": { "slug": ["The slug has already been taken."] }
+            }
+          }
+        },
+        {
+          "id": "central.tenants.set-current",
+          "method": "POST",
+          "url": "/api/central/current-tenant",
+          "auth_required": true,
+          "description": "Set the active tenant for the authenticated user. The user must be the owner or a member of the tenant (or a super admin).",
+          "request": {
+            "headers": {
+              "Authorization": "Bearer {token}",
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            },
+            "body": {
+              "tenant_id": 1
+            },
+            "validation": {
+              "tenant_id": "required|integer|exists:tenants,id"
+            }
+          },
+          "responses": {
+            "200": {
+              "status": true,
+              "message": "Current tenant updated",
+              "data": {
+                "id": 1,
+                "name": "Admin User",
+                "email": "admin@example.com",
+                "is_super_admin": false,
+                "current_tenant_id": 1,
+                "current_tenant": {
+                  "id": 1,
+                  "name": "Al-Nour School",
+                  "slug": "al-nour-school"
+                },
+                "tenants": [
+                  {
+                    "id": 1,
+                    "name": "Al-Nour School",
+                    "slug": "al-nour-school",
+                    "role": "admin"
+                  }
+                ]
+              }
+            },
+            "403": {
+              "status": false,
+              "message": "You do not have access to the selected tenant."
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tenant — Health",
+      "notes": "All /api/tenant/* routes require: (1) valid Bearer token, (2) user must have current_tenant_id set.",
+      "routes": [
+        {
+          "id": "tenant.health",
+          "method": "GET",
+          "url": "/api/tenant/health",
+          "auth_required": true,
+          "description": "Check tenant context: confirms the correct tenant database is active for the authenticated user.",
+          "request": {
+            "headers": {
+              "Authorization": "Bearer {token}",
+              "Accept": "application/json"
+            },
+            "body": null
+          },
+          "responses": {
+            "200": {
+              "status": "ok",
+              "tenant_id": 1,
+              "user_id": 1,
+              "current_tenant_id": 1
+            },
+            "403": {
+              "status": false,
+              "message": "No active tenant selected."
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tenant — Students",
+      "routes": [
+        {
+          "id": "tenant.students.index",
+          "method": "GET",
+          "url": "/api/tenant/students",
+          "auth_required": true,
+          "description": "List all students in the active tenant.",
+          "request": {
+            "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" },
+            "body": null
+          },
+          "responses": {
+            "200": {
+              "status": true,
+              "message": "Students retrieved successfully",
+              "data": [
+                {
+                  "id": 1,
+                  "student_id_number": "STD-001",
+                  "date_of_birth": "2005-03-15",
+                  "address": "123 Main St",
+                  "phone": "+966501111111",
+                  "parent_name": "Ahmad Ali",
+                  "parent_phone": "+966502222222",
+                  "user": {
+                    "id": 1,
+                    "name": "Khalid Ahmad",
+                    "email": "khalid@school.edu",
+                    "type": "student"
+                  },
+                  "created_at": "2026-04-15T10:00:00.000000Z",
+                  "updated_at": "2026-04-15T10:00:00.000000Z"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "tenant.students.store",
+          "method": "POST",
+          "url": "/api/tenant/students",
+          "auth_required": true,
+          "description": "Create a new student. Automatically creates a TenantUser of type 'student' and links it to the student profile.",
+          "request": {
+            "headers": { "Authorization": "Bearer {token}", "Content-Type": "application/json", "Accept": "application/json" },
+            "body": {
+              "name": "Khalid Ahmad",
+              "email": "khalid@school.edu",
+              "password": "password123",
+              "student_id_number": "STD-001",
+              "date_of_birth": "2005-03-15",
+              "address": "123 Main St",
+              "phone": "+966501111111",
+              "parent_name": "Ahmad Ali",
+              "parent_phone": "+966502222222"
+            },
+            "validation": {
+              "name": "required|string|max:255",
+              "email": "required|email|unique:users,email",
+              "password": "required|string|min:8",
+              "student_id_number": "nullable|string|unique:students,student_id_number",
+              "date_of_birth": "nullable|date",
+              "address": "nullable|string",
+              "phone": "nullable|string",
+              "parent_name": "nullable|string",
+              "parent_phone": "nullable|string"
+            }
+          },
+          "responses": {
+            "200": {
+              "status": true,
+              "message": "Student created successfully",
+              "data": {
+                "id": 1,
+                "student_id_number": "STD-001",
+                "date_of_birth": "2005-03-15",
+                "address": "123 Main St",
+                "phone": "+966501111111",
+                "parent_name": "Ahmad Ali",
+                "parent_phone": "+966502222222",
+                "user": { "id": 1, "name": "Khalid Ahmad", "email": "khalid@school.edu", "type": "student" },
+                "created_at": "2026-04-15T10:00:00.000000Z",
+                "updated_at": "2026-04-15T10:00:00.000000Z"
+              }
+            }
+          }
+        },
+        {
+          "id": "tenant.students.show",
+          "method": "GET",
+          "url": "/api/tenant/students/{id}",
+          "auth_required": true,
+          "description": "Get a single student by ID.",
+          "request": {
+            "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" },
+            "body": null
+          },
+          "responses": {
+            "200": { "status": true, "message": "Student retrieved successfully", "data": { "id": 1, "student_id_number": "STD-001", "user": { "id": 1, "name": "Khalid Ahmad", "email": "khalid@school.edu", "type": "student" } } },
+            "404": { "message": "No query results for model [Student] 99" }
+          }
+        },
+        {
+          "id": "tenant.students.update",
+          "method": "PUT",
+          "url": "/api/tenant/students/{id}",
+          "auth_required": true,
+          "description": "Update a student and their linked tenant user. Password is optional on update.",
+          "request": {
+            "headers": { "Authorization": "Bearer {token}", "Content-Type": "application/json", "Accept": "application/json" },
+            "body": {
+              "name": "Khalid Ahmad Updated",
+              "email": "khalid.new@school.edu",
+              "student_id_number": "STD-001",
+              "date_of_birth": "2005-03-15",
+              "address": "456 New St",
+              "phone": "+966503333333",
+              "parent_name": "Ahmad Ali",
+              "parent_phone": "+966504444444"
+            }
+          },
+          "responses": {
+            "200": { "status": true, "message": "Student updated successfully", "data": { "id": 1, "student_id_number": "STD-001", "address": "456 New St", "user": { "name": "Khalid Ahmad Updated" } } }
+          }
+        },
+        {
+          "id": "tenant.students.destroy",
+          "method": "DELETE",
+          "url": "/api/tenant/students/{id}",
+          "auth_required": true,
+          "description": "Delete a student and their linked tenant user.",
+          "request": {
+            "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" },
+            "body": null
+          },
+          "responses": {
+            "200": { "status": true, "message": "Student deleted successfully", "data": null }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tenant — Teachers",
+      "routes": [
+        {
+          "id": "tenant.teachers.index",
+          "method": "GET",
+          "url": "/api/tenant/teachers",
+          "auth_required": true,
+          "description": "List all teachers in the active tenant.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": {
+            "200": {
+              "status": true,
+              "message": "Teachers retrieved successfully",
+              "data": [
+                {
+                  "id": 1,
+                  "employee_id_number": "EMP-001",
+                  "specialization": "Mathematics",
+                  "bio": "Experienced math teacher",
+                  "user": { "id": 2, "name": "Sara Mohamed", "email": "sara@school.edu", "type": "teacher" },
+                  "created_at": "2026-04-15T10:00:00.000000Z",
+                  "updated_at": "2026-04-15T10:00:00.000000Z"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "tenant.teachers.store",
+          "method": "POST",
+          "url": "/api/tenant/teachers",
+          "auth_required": true,
+          "description": "Create a new teacher with an auto-created TenantUser of type 'teacher'.",
+          "request": {
+            "headers": { "Authorization": "Bearer {token}", "Content-Type": "application/json", "Accept": "application/json" },
+            "body": {
+              "name": "Sara Mohamed",
+              "email": "sara@school.edu",
+              "password": "password123",
+              "employee_id_number": "EMP-001",
+              "specialization": "Mathematics",
+              "bio": "Experienced math teacher"
+            },
+            "validation": {
+              "name": "required|string|max:255",
+              "email": "required|email|unique:users,email",
+              "password": "required|string|min:8",
+              "employee_id_number": "nullable|string|unique:teachers,employee_id_number",
+              "specialization": "nullable|string",
+              "bio": "nullable|string"
+            }
+          },
+          "responses": {
+            "200": {
+              "status": true,
+              "message": "Teacher created successfully",
+              "data": {
+                "id": 1,
+                "employee_id_number": "EMP-001",
+                "specialization": "Mathematics",
+                "bio": "Experienced math teacher",
+                "user": { "id": 2, "name": "Sara Mohamed", "email": "sara@school.edu", "type": "teacher" },
+                "created_at": "2026-04-15T10:00:00.000000Z",
+                "updated_at": "2026-04-15T10:00:00.000000Z"
+              }
+            }
+          }
+        },
+        {
+          "id": "tenant.teachers.show",
+          "method": "GET",
+          "url": "/api/tenant/teachers/{id}",
+          "auth_required": true,
+          "description": "Get a single teacher by ID.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": { "200": { "status": true, "message": "Teacher retrieved successfully", "data": { "id": 1, "employee_id_number": "EMP-001" } }, "404": { "message": "No query results for model [Teacher] 99" } }
+        },
+        {
+          "id": "tenant.teachers.update",
+          "method": "PUT",
+          "url": "/api/tenant/teachers/{id}",
+          "auth_required": true,
+          "description": "Update a teacher and their linked tenant user. Password optional.",
+          "request": {
+            "headers": { "Authorization": "Bearer {token}", "Content-Type": "application/json", "Accept": "application/json" },
+            "body": { "name": "Sara Mohamed", "email": "sara@school.edu", "employee_id_number": "EMP-001", "specialization": "Physics", "bio": "Updated bio" }
+          },
+          "responses": { "200": { "status": true, "message": "Teacher updated successfully", "data": { "id": 1, "specialization": "Physics" } } }
+        },
+        {
+          "id": "tenant.teachers.destroy",
+          "method": "DELETE",
+          "url": "/api/tenant/teachers/{id}",
+          "auth_required": true,
+          "description": "Delete a teacher and their linked tenant user.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": { "200": { "status": true, "message": "Teacher deleted successfully", "data": null } }
+        }
+      ]
+    },
+    {
+      "name": "Tenant — Courses",
+      "routes": [
+        {
+          "id": "tenant.courses.index",
+          "method": "GET",
+          "url": "/api/tenant/courses",
+          "auth_required": true,
+          "description": "List all courses in the active tenant.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": {
+            "200": {
+              "status": true,
+              "message": "Courses retrieved successfully",
+              "data": [
+                {
+                  "id": 1,
+                  "name": "Algebra",
+                  "code": "MATH101",
+                  "description": "Introduction to algebra",
+                  "status": "active",
+                  "teacher": { "id": 1, "employee_id_number": "EMP-001", "user": { "id": 2, "name": "Sara Mohamed", "email": "sara@school.edu" } },
+                  "created_at": "2026-04-15T10:00:00.000000Z",
+                  "updated_at": "2026-04-15T10:00:00.000000Z"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "tenant.courses.store",
+          "method": "POST",
+          "url": "/api/tenant/courses",
+          "auth_required": true,
+          "description": "Create a new course.",
+          "request": {
+            "headers": { "Authorization": "Bearer {token}", "Content-Type": "application/json", "Accept": "application/json" },
+            "body": { "name": "Algebra", "code": "MATH101", "description": "Introduction to algebra", "teacher_id": 1, "status": "active" },
+            "validation": {
+              "name": "required|string|max:255",
+              "code": "required|string|unique:courses,code",
+              "description": "nullable|string",
+              "teacher_id": "nullable|integer|exists:teachers,id",
+              "status": "required|in:active,inactive,archived"
+            }
+          },
+          "responses": {
+            "200": { "status": true, "message": "Course created successfully", "data": { "id": 1, "name": "Algebra", "code": "MATH101", "status": "active", "teacher": { "id": 1, "user": { "name": "Sara Mohamed" } } } }
+          }
+        },
+        {
+          "id": "tenant.courses.show",
+          "method": "GET",
+          "url": "/api/tenant/courses/{id}",
+          "auth_required": true,
+          "description": "Get a single course by ID.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": { "200": { "status": true, "message": "Course retrieved successfully", "data": { "id": 1, "name": "Algebra", "code": "MATH101" } } }
+        },
+        {
+          "id": "tenant.courses.update",
+          "method": "PUT",
+          "url": "/api/tenant/courses/{id}",
+          "auth_required": true,
+          "description": "Update a course.",
+          "request": {
+            "headers": { "Authorization": "Bearer {token}", "Content-Type": "application/json", "Accept": "application/json" },
+            "body": { "name": "Advanced Algebra", "code": "MATH101", "description": "Updated description", "teacher_id": 1, "status": "archived" }
+          },
+          "responses": { "200": { "status": true, "message": "Course updated successfully", "data": { "id": 1, "name": "Advanced Algebra", "status": "archived" } } }
+        },
+        {
+          "id": "tenant.courses.destroy",
+          "method": "DELETE",
+          "url": "/api/tenant/courses/{id}",
+          "auth_required": true,
+          "description": "Delete a course.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": { "200": { "status": true, "message": "Course deleted successfully", "data": null } }
+        }
+      ]
+    },
+    {
+      "name": "Tenant — Classes",
+      "routes": [
+        {
+          "id": "tenant.classes.index",
+          "method": "GET",
+          "url": "/api/tenant/classes",
+          "auth_required": true,
+          "description": "List all classes in the active tenant.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": {
+            "200": {
+              "status": true,
+              "message": "Classes retrieved successfully",
+              "data": [
+                {
+                  "id": 1,
+                  "name": "Morning Group A",
+                  "description": "Morning session",
+                  "start_date": "2026-05-01",
+                  "end_date": "2026-05-31",
+                  "schedule": [{ "day": "monday", "start": "08:00", "end": "10:00" }],
+                  "course": { "id": 1, "name": "Algebra", "code": "MATH101" },
+                  "teacher": { "id": 1, "employee_id_number": "EMP-001", "user": { "name": "Sara Mohamed" } },
+                  "created_at": "2026-04-15T10:00:00.000000Z",
+                  "updated_at": "2026-04-15T10:00:00.000000Z"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "tenant.classes.store",
+          "method": "POST",
+          "url": "/api/tenant/classes",
+          "auth_required": true,
+          "description": "Create a new class linked to a course and a teacher.",
+          "request": {
+            "headers": { "Authorization": "Bearer {token}", "Content-Type": "application/json", "Accept": "application/json" },
+            "body": {
+              "name": "Morning Group A",
+              "description": "Morning session",
+              "course_id": 1,
+              "teacher_id": 1,
+              "start_date": "2026-05-01",
+              "end_date": "2026-05-31",
+              "schedule": [
+                { "day": "monday", "start": "08:00", "end": "10:00" },
+                { "day": "wednesday", "start": "08:00", "end": "10:00" }
+              ]
+            },
+            "validation": {
+              "name": "required|string|max:255",
+              "description": "nullable|string",
+              "course_id": "required|integer|exists:courses,id",
+              "teacher_id": "required|integer|exists:teachers,id",
+              "start_date": "nullable|date",
+              "end_date": "nullable|date",
+              "schedule": "nullable|array"
+            }
+          },
+          "responses": {
+            "200": { "status": true, "message": "Class created successfully", "data": { "id": 1, "name": "Morning Group A", "schedule": [{ "day": "monday", "start": "08:00", "end": "10:00" }], "course": { "code": "MATH101" }, "teacher": { "user": { "name": "Sara Mohamed" } } } }
+          }
+        },
+        {
+          "id": "tenant.classes.show",
+          "method": "GET",
+          "url": "/api/tenant/classes/{id}",
+          "auth_required": true,
+          "description": "Get a single class by ID.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": { "200": { "status": true, "message": "Class retrieved successfully", "data": { "id": 1, "name": "Morning Group A" } } }
+        },
+        {
+          "id": "tenant.classes.update",
+          "method": "PUT",
+          "url": "/api/tenant/classes/{id}",
+          "auth_required": true,
+          "description": "Update a class.",
+          "request": {
+            "headers": { "Authorization": "Bearer {token}", "Content-Type": "application/json", "Accept": "application/json" },
+            "body": { "name": "Evening Group B", "description": "Evening session", "course_id": 1, "teacher_id": 1, "start_date": "2026-06-01", "end_date": "2026-06-30", "schedule": [{ "day": "tuesday", "start": "18:00", "end": "20:00" }] }
+          },
+          "responses": { "200": { "status": true, "message": "Class updated successfully", "data": { "id": 1, "name": "Evening Group B" } } }
+        },
+        {
+          "id": "tenant.classes.destroy",
+          "method": "DELETE",
+          "url": "/api/tenant/classes/{id}",
+          "auth_required": true,
+          "description": "Delete a class.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": { "200": { "status": true, "message": "Class deleted successfully", "data": null } }
+        }
+      ]
+    },
+    {
+      "name": "Tenant — Enrollments",
+      "routes": [
+        {
+          "id": "tenant.enrollments.index",
+          "method": "GET",
+          "url": "/api/tenant/enrollments",
+          "auth_required": true,
+          "description": "List all enrollments in the active tenant.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": {
+            "200": {
+              "status": true,
+              "message": "Enrollments retrieved successfully",
+              "data": [
+                {
+                  "id": 1,
+                  "enrollment_date": "2026-05-01",
+                  "status": "active",
+                  "student": { "id": 1, "student_id_number": "STD-001", "user": { "id": 1, "name": "Khalid Ahmad", "email": "khalid@school.edu" } },
+                  "class": { "id": 1, "name": "Morning Group A", "course": { "id": 1, "name": "Algebra", "code": "MATH101" }, "teacher": { "id": 1, "name": "Sara Mohamed" } },
+                  "created_at": "2026-04-15T10:00:00.000000Z",
+                  "updated_at": "2026-04-15T10:00:00.000000Z"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "tenant.enrollments.store",
+          "method": "POST",
+          "url": "/api/tenant/enrollments",
+          "auth_required": true,
+          "description": "Enroll a student in a class. Duplicate enrollment (same student + same class) is rejected with 422.",
+          "request": {
+            "headers": { "Authorization": "Bearer {token}", "Content-Type": "application/json", "Accept": "application/json" },
+            "body": { "student_id": 1, "class_id": 1, "enrollment_date": "2026-05-01", "status": "active" },
+            "validation": {
+              "student_id": "required|integer|exists:students,id",
+              "class_id": "required|integer|exists:classes,id",
+              "enrollment_date": "required|date",
+              "status": "required|in:active,completed,dropped"
+            }
+          },
+          "responses": {
+            "200": { "status": true, "message": "Enrollment created successfully", "data": { "id": 1, "enrollment_date": "2026-05-01", "status": "active", "student": { "id": 1 }, "class": { "id": 1 } } },
+            "422": { "message": "Student is already enrolled in this class.", "errors": { "student_id": ["Student is already enrolled in this class."] } }
+          }
+        },
+        {
+          "id": "tenant.enrollments.show",
+          "method": "GET",
+          "url": "/api/tenant/enrollments/{id}",
+          "auth_required": true,
+          "description": "Get a single enrollment by ID.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": { "200": { "status": true, "message": "Enrollment retrieved successfully", "data": { "id": 1, "status": "active" } } }
+        },
+        {
+          "id": "tenant.enrollments.update",
+          "method": "PUT",
+          "url": "/api/tenant/enrollments/{id}",
+          "auth_required": true,
+          "description": "Update an enrollment (e.g., change status to completed or dropped).",
+          "request": {
+            "headers": { "Authorization": "Bearer {token}", "Content-Type": "application/json", "Accept": "application/json" },
+            "body": { "student_id": 1, "class_id": 1, "enrollment_date": "2026-05-01", "status": "completed" }
+          },
+          "responses": { "200": { "status": true, "message": "Enrollment updated successfully", "data": { "id": 1, "status": "completed" } } }
+        },
+        {
+          "id": "tenant.enrollments.destroy",
+          "method": "DELETE",
+          "url": "/api/tenant/enrollments/{id}",
+          "auth_required": true,
+          "description": "Delete an enrollment.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": { "200": { "status": true, "message": "Enrollment deleted successfully", "data": null } }
+        }
+      ]
+    },
+    {
+      "name": "Tenant — Assignments",
+      "routes": [
+        {
+          "id": "tenant.assignments.index",
+          "method": "GET",
+          "url": "/api/tenant/assignments",
+          "auth_required": true,
+          "description": "List all assignments in the active tenant.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": {
+            "200": {
+              "status": true,
+              "message": "Assignments retrieved successfully",
+              "data": [
+                {
+                  "id": 1,
+                  "title": "Chapter 1 Exercises",
+                  "description": "Complete exercises 1-20",
+                  "due_date": "2026-05-15T23:59:00.000000Z",
+                  "max_grade": 100.00,
+                  "class": { "id": 1, "name": "Morning Group A", "course": { "id": 1, "name": "Algebra", "code": "MATH101" } },
+                  "teacher": { "id": 1, "employee_id_number": "EMP-001", "user": { "id": 2, "name": "Sara Mohamed", "email": "sara@school.edu" } },
+                  "created_at": "2026-04-15T10:00:00.000000Z",
+                  "updated_at": "2026-04-15T10:00:00.000000Z"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "tenant.assignments.store",
+          "method": "POST",
+          "url": "/api/tenant/assignments",
+          "auth_required": true,
+          "description": "Create a new assignment for a class.",
+          "request": {
+            "headers": { "Authorization": "Bearer {token}", "Content-Type": "application/json", "Accept": "application/json" },
+            "body": { "title": "Chapter 1 Exercises", "description": "Complete exercises 1-20", "due_date": "2026-05-15 23:59:00", "class_id": 1, "teacher_id": 1, "max_grade": 100 },
+            "validation": {
+              "title": "required|string|max:255",
+              "description": "nullable|string",
+              "due_date": "required|date",
+              "class_id": "required|integer|exists:classes,id",
+              "teacher_id": "required|integer|exists:teachers,id",
+              "max_grade": "required|numeric|min:0.01"
+            }
+          },
+          "responses": { "200": { "status": true, "message": "Assignment created successfully", "data": { "id": 1, "title": "Chapter 1 Exercises", "max_grade": 100.00 } } }
+        },
+        {
+          "id": "tenant.assignments.show",
+          "method": "GET",
+          "url": "/api/tenant/assignments/{id}",
+          "auth_required": true,
+          "description": "Get a single assignment by ID.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": { "200": { "status": true, "message": "Assignment retrieved successfully", "data": { "id": 1, "title": "Chapter 1 Exercises" } } }
+        },
+        {
+          "id": "tenant.assignments.update",
+          "method": "PUT",
+          "url": "/api/tenant/assignments/{id}",
+          "auth_required": true,
+          "description": "Update an assignment.",
+          "request": {
+            "headers": { "Authorization": "Bearer {token}", "Content-Type": "application/json", "Accept": "application/json" },
+            "body": { "title": "Chapter 1 Exercises (Updated)", "description": "Updated instructions", "due_date": "2026-05-20 23:59:00", "class_id": 1, "teacher_id": 1, "max_grade": 50 }
+          },
+          "responses": { "200": { "status": true, "message": "Assignment updated successfully", "data": { "id": 1, "title": "Chapter 1 Exercises (Updated)", "max_grade": 50.00 } } }
+        },
+        {
+          "id": "tenant.assignments.destroy",
+          "method": "DELETE",
+          "url": "/api/tenant/assignments/{id}",
+          "auth_required": true,
+          "description": "Delete an assignment.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": { "200": { "status": true, "message": "Assignment deleted successfully", "data": null } }
+        }
+      ]
+    },
+    {
+      "name": "Tenant — Submissions",
+      "routes": [
+        {
+          "id": "tenant.submissions.index",
+          "method": "GET",
+          "url": "/api/tenant/submissions",
+          "auth_required": true,
+          "description": "List all submissions in the active tenant.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": {
+            "200": {
+              "status": true,
+              "message": "Submissions retrieved successfully",
+              "data": [
+                {
+                  "id": 1,
+                  "submission_date": "2026-05-14T20:00:00.000000Z",
+                  "file_path": null,
+                  "content": "My answer to exercise 1...",
+                  "grade": null,
+                  "feedback": null,
+                  "assignment": { "id": 1, "title": "Chapter 1 Exercises", "max_grade": 100.00, "class": { "id": 1, "name": "Morning Group A", "course": { "id": 1, "name": "Algebra", "code": "MATH101" } } },
+                  "student": { "id": 1, "student_id_number": "STD-001", "user": { "id": 1, "name": "Khalid Ahmad", "email": "khalid@school.edu" } },
+                  "created_at": "2026-04-15T10:00:00.000000Z",
+                  "updated_at": "2026-04-15T10:00:00.000000Z"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "tenant.submissions.store",
+          "method": "POST",
+          "url": "/api/tenant/submissions",
+          "auth_required": true,
+          "description": "Submit an assignment. The student must be enrolled in the assignment's class. Grade cannot exceed assignment's max_grade.",
+          "request": {
+            "headers": { "Authorization": "Bearer {token}", "Content-Type": "application/json", "Accept": "application/json" },
+            "body": { "assignment_id": 1, "student_id": 1, "submission_date": "2026-05-14 20:00:00", "content": "My answer to exercise 1...", "file_path": null, "grade": null, "feedback": null },
+            "validation": {
+              "assignment_id": "required|integer|exists:assignments,id",
+              "student_id": "required|integer|exists:students,id",
+              "submission_date": "required|date",
+              "file_path": "nullable|string",
+              "content": "nullable|string",
+              "grade": "nullable|numeric|min:0",
+              "feedback": "nullable|string"
+            }
+          },
+          "responses": {
+            "200": { "status": true, "message": "Submission created successfully", "data": { "id": 1, "submission_date": "2026-05-14T20:00:00.000000Z", "content": "My answer to exercise 1..." } },
+            "422": {
+              "student_not_enrolled": { "message": "Student is not enrolled in the class for this assignment.", "errors": { "student_id": ["Student is not enrolled in the class for this assignment."] } },
+              "grade_exceeds_max": { "message": "Grade exceeds the maximum allowed grade for this assignment.", "errors": { "grade": ["Grade exceeds the maximum allowed grade for this assignment."] } }
+            }
+          }
+        },
+        {
+          "id": "tenant.submissions.show",
+          "method": "GET",
+          "url": "/api/tenant/submissions/{id}",
+          "auth_required": true,
+          "description": "Get a single submission by ID.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": { "200": { "status": true, "message": "Submission retrieved successfully", "data": { "id": 1 } } }
+        },
+        {
+          "id": "tenant.submissions.update",
+          "method": "PUT",
+          "url": "/api/tenant/submissions/{id}",
+          "auth_required": true,
+          "description": "Update a submission (e.g., add grade and feedback after grading).",
+          "request": {
+            "headers": { "Authorization": "Bearer {token}", "Content-Type": "application/json", "Accept": "application/json" },
+            "body": { "assignment_id": 1, "student_id": 1, "submission_date": "2026-05-14 20:00:00", "content": "My answer...", "grade": 85, "feedback": "Well done!" }
+          },
+          "responses": { "200": { "status": true, "message": "Submission updated successfully", "data": { "id": 1, "grade": 85.00, "feedback": "Well done!" } } }
+        },
+        {
+          "id": "tenant.submissions.destroy",
+          "method": "DELETE",
+          "url": "/api/tenant/submissions/{id}",
+          "auth_required": true,
+          "description": "Delete a submission.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": { "200": { "status": true, "message": "Submission deleted successfully", "data": null } }
+        }
+      ]
+    },
+    {
+      "name": "Tenant — Grades",
+      "routes": [
+        {
+          "id": "tenant.grades.index",
+          "method": "GET",
+          "url": "/api/tenant/grades",
+          "auth_required": true,
+          "description": "List all grades in the active tenant.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": {
+            "200": {
+              "status": true,
+              "message": "Grades retrieved successfully",
+              "data": [
+                {
+                  "id": 1,
+                  "grade": 92.50,
+                  "comments": "Excellent performance",
+                  "student": { "id": 1, "student_id_number": "STD-001", "user": { "id": 1, "name": "Khalid Ahmad", "email": "khalid@school.edu" } },
+                  "course": { "id": 1, "name": "Algebra", "code": "MATH101" },
+                  "assignment": { "id": 1, "title": "Chapter 1 Exercises", "class": { "id": 1, "name": "Morning Group A", "course": { "id": 1, "name": "Algebra", "code": "MATH101" } } },
+                  "teacher": { "id": 1, "employee_id_number": "EMP-001", "user": { "id": 2, "name": "Sara Mohamed", "email": "sara@school.edu" } },
+                  "created_at": "2026-04-15T10:00:00.000000Z",
+                  "updated_at": "2026-04-15T10:00:00.000000Z"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "tenant.grades.store",
+          "method": "POST",
+          "url": "/api/tenant/grades",
+          "auth_required": true,
+          "description": "Record a grade for a student. Either course_id or assignment_id must be provided (or both). If both are provided, the assignment must belong to the given course.",
+          "request": {
+            "headers": { "Authorization": "Bearer {token}", "Content-Type": "application/json", "Accept": "application/json" },
+            "body": { "student_id": 1, "course_id": 1, "assignment_id": 1, "grade": 92.50, "comments": "Excellent performance", "graded_by": 1 },
+            "validation": {
+              "student_id": "required|integer|exists:students,id",
+              "course_id": "nullable|integer|exists:courses,id",
+              "assignment_id": "nullable|integer|exists:assignments,id",
+              "grade": "required|numeric|min:0",
+              "comments": "nullable|string",
+              "graded_by": "nullable|integer|exists:teachers,id"
+            }
+          },
+          "responses": {
+            "200": { "status": true, "message": "Grade created successfully", "data": { "id": 1, "grade": 92.50, "comments": "Excellent performance" } },
+            "422": { "message": "The assignment does not belong to the given course.", "errors": { "assignment_id": ["The assignment does not belong to the given course."] } }
+          }
+        },
+        {
+          "id": "tenant.grades.show",
+          "method": "GET",
+          "url": "/api/tenant/grades/{id}",
+          "auth_required": true,
+          "description": "Get a single grade by ID.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": { "200": { "status": true, "message": "Grade retrieved successfully", "data": { "id": 1, "grade": 92.50 } } }
+        },
+        {
+          "id": "tenant.grades.update",
+          "method": "PUT",
+          "url": "/api/tenant/grades/{id}",
+          "auth_required": true,
+          "description": "Update a grade record.",
+          "request": {
+            "headers": { "Authorization": "Bearer {token}", "Content-Type": "application/json", "Accept": "application/json" },
+            "body": { "student_id": 1, "course_id": 1, "assignment_id": 1, "grade": 95.00, "comments": "Updated comment", "graded_by": 1 }
+          },
+          "responses": { "200": { "status": true, "message": "Grade updated successfully", "data": { "id": 1, "grade": 95.00 } } }
+        },
+        {
+          "id": "tenant.grades.destroy",
+          "method": "DELETE",
+          "url": "/api/tenant/grades/{id}",
+          "auth_required": true,
+          "description": "Delete a grade record.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": { "200": { "status": true, "message": "Grade deleted successfully", "data": null } }
+        }
+      ]
+    },
+    {
+      "name": "Tenant — Announcements",
+      "routes": [
+        {
+          "id": "tenant.announcements.index",
+          "method": "GET",
+          "url": "/api/tenant/announcements",
+          "auth_required": true,
+          "description": "List all announcements in the active tenant, ordered newest first.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": {
+            "200": {
+              "status": true,
+              "message": "Announcements retrieved successfully",
+              "data": [
+                {
+                  "id": 1,
+                  "title": "Welcome to the New Semester",
+                  "content": "Dear students, welcome back!",
+                  "audience_type": "all",
+                  "audience_id": null,
+                  "published_at": "2026-05-01T09:00:00.000000Z",
+                  "creator": { "id": 1, "name": "Admin User", "email": "admin@school.edu", "type": "admin" },
+                  "created_at": "2026-04-15T10:00:00.000000Z",
+                  "updated_at": "2026-04-15T10:00:00.000000Z"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "tenant.announcements.store",
+          "method": "POST",
+          "url": "/api/tenant/announcements",
+          "auth_required": true,
+          "description": "Create a new announcement. audience_type can target 'all', 'students', 'teachers', or a specific 'class' (pass audience_id = class_id in that case).",
+          "request": {
+            "headers": { "Authorization": "Bearer {token}", "Content-Type": "application/json", "Accept": "application/json" },
+            "body": {
+              "title": "Welcome to the New Semester",
+              "content": "Dear students, welcome back!",
+              "created_by": 1,
+              "audience_type": "all",
+              "audience_id": null,
+              "published_at": "2026-05-01 09:00:00"
+            },
+            "validation": {
+              "title": "required|string|max:255",
+              "content": "required|string",
+              "created_by": "required|integer|exists:users,id",
+              "audience_type": "nullable|in:all,students,teachers,class",
+              "audience_id": "nullable|integer",
+              "published_at": "nullable|date"
+            }
+          },
+          "responses": {
+            "200": {
+              "status": true,
+              "message": "Announcement created successfully",
+              "data": {
+                "id": 1,
+                "title": "Welcome to the New Semester",
+                "content": "Dear students, welcome back!",
+                "audience_type": "all",
+                "audience_id": null,
+                "published_at": "2026-05-01T09:00:00.000000Z",
+                "creator": { "id": 1, "name": "Admin User", "email": "admin@school.edu", "type": "admin" },
+                "created_at": "2026-04-15T10:00:00.000000Z",
+                "updated_at": "2026-04-15T10:00:00.000000Z"
+              }
+            }
+          }
+        },
+        {
+          "id": "tenant.announcements.show",
+          "method": "GET",
+          "url": "/api/tenant/announcements/{id}",
+          "auth_required": true,
+          "description": "Get a single announcement by ID.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": {
+            "200": { "status": true, "message": "Announcement retrieved successfully", "data": { "id": 1, "title": "Welcome to the New Semester", "creator": { "id": 1 } } },
+            "404": { "message": "No query results for model [Announcement] 99" }
+          }
+        },
+        {
+          "id": "tenant.announcements.update",
+          "method": "PUT",
+          "url": "/api/tenant/announcements/{id}",
+          "auth_required": true,
+          "description": "Update an announcement.",
+          "request": {
+            "headers": { "Authorization": "Bearer {token}", "Content-Type": "application/json", "Accept": "application/json" },
+            "body": {
+              "title": "Updated Announcement Title",
+              "content": "Updated content here.",
+              "created_by": 1,
+              "audience_type": "teachers",
+              "audience_id": null,
+              "published_at": null
+            }
+          },
+          "responses": {
+            "200": { "status": true, "message": "Announcement updated successfully", "data": { "id": 1, "title": "Updated Announcement Title", "audience_type": "teachers" } }
+          }
+        },
+        {
+          "id": "tenant.announcements.destroy",
+          "method": "DELETE",
+          "url": "/api/tenant/announcements/{id}",
+          "auth_required": true,
+          "description": "Delete an announcement.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": { "200": { "status": true, "message": "Announcement deleted successfully", "data": null } }
+        }
+      ]
+    },
+    {
+      "name": "Tenant — Events",
+      "routes": [
+        {
+          "id": "tenant.events.index",
+          "method": "GET",
+          "url": "/api/tenant/events",
+          "auth_required": true,
+          "description": "List all events in the active tenant, ordered newest first.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": {
+            "200": {
+              "status": true,
+              "message": "Events retrieved successfully",
+              "data": [
+                {
+                  "id": 1,
+                  "title": "Annual Science Fair",
+                  "description": "Students showcase their projects",
+                  "start_date": "2026-06-10T09:00:00.000000Z",
+                  "end_date": "2026-06-10T17:00:00.000000Z",
+                  "location": "Main Hall",
+                  "creator": { "id": 1, "name": "Admin User", "email": "admin@school.edu", "type": "admin" },
+                  "created_at": "2026-04-15T10:00:00.000000Z",
+                  "updated_at": "2026-04-15T10:00:00.000000Z"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "tenant.events.store",
+          "method": "POST",
+          "url": "/api/tenant/events",
+          "auth_required": true,
+          "description": "Create a new event. end_date must be on or after start_date if provided.",
+          "request": {
+            "headers": { "Authorization": "Bearer {token}", "Content-Type": "application/json", "Accept": "application/json" },
+            "body": {
+              "title": "Annual Science Fair",
+              "description": "Students showcase their projects",
+              "start_date": "2026-06-10 09:00:00",
+              "end_date": "2026-06-10 17:00:00",
+              "location": "Main Hall",
+              "created_by": 1
+            },
+            "validation": {
+              "title": "required|string|max:255",
+              "description": "nullable|string",
+              "start_date": "required|date",
+              "end_date": "nullable|date|after_or_equal:start_date",
+              "location": "nullable|string|max:255",
+              "created_by": "required|integer|exists:users,id"
+            }
+          },
+          "responses": {
+            "200": {
+              "status": true,
+              "message": "Event created successfully",
+              "data": {
+                "id": 1,
+                "title": "Annual Science Fair",
+                "description": "Students showcase their projects",
+                "start_date": "2026-06-10T09:00:00.000000Z",
+                "end_date": "2026-06-10T17:00:00.000000Z",
+                "location": "Main Hall",
+                "creator": { "id": 1, "name": "Admin User", "email": "admin@school.edu", "type": "admin" },
+                "created_at": "2026-04-15T10:00:00.000000Z",
+                "updated_at": "2026-04-15T10:00:00.000000Z"
+              }
+            },
+            "422": {
+              "message": "The end date field must be a date after or equal to start date.",
+              "errors": { "end_date": ["The end date field must be a date after or equal to start date."] }
+            }
+          }
+        },
+        {
+          "id": "tenant.events.show",
+          "method": "GET",
+          "url": "/api/tenant/events/{id}",
+          "auth_required": true,
+          "description": "Get a single event by ID.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": {
+            "200": { "status": true, "message": "Event retrieved successfully", "data": { "id": 1, "title": "Annual Science Fair", "location": "Main Hall" } },
+            "404": { "message": "No query results for model [Event] 99" }
+          }
+        },
+        {
+          "id": "tenant.events.update",
+          "method": "PUT",
+          "url": "/api/tenant/events/{id}",
+          "auth_required": true,
+          "description": "Update an event.",
+          "request": {
+            "headers": { "Authorization": "Bearer {token}", "Content-Type": "application/json", "Accept": "application/json" },
+            "body": {
+              "title": "Annual Science Fair (Updated)",
+              "description": "Updated description",
+              "start_date": "2026-06-12 09:00:00",
+              "end_date": "2026-06-12 17:00:00",
+              "location": "Auditorium",
+              "created_by": 1
+            }
+          },
+          "responses": {
+            "200": { "status": true, "message": "Event updated successfully", "data": { "id": 1, "title": "Annual Science Fair (Updated)", "location": "Auditorium" } }
+          }
+        },
+        {
+          "id": "tenant.events.destroy",
+          "method": "DELETE",
+          "url": "/api/tenant/events/{id}",
+          "auth_required": true,
+          "description": "Delete an event.",
+          "request": { "headers": { "Authorization": "Bearer {token}", "Accept": "application/json" }, "body": null },
+          "responses": { "200": { "status": true, "message": "Event deleted successfully", "data": null } }
+        }
+      ]
+    }
+  ],
+  "common_errors": {
+    "401_unauthenticated": {
+      "http_status": 401,
+      "body": { "message": "Unauthenticated." },
+      "cause": "No token provided or token expired/revoked."
+    },
+    "403_no_tenant": {
+      "http_status": 403,
+      "body": { "status": false, "message": "No active tenant selected." },
+      "cause": "User has no current_tenant_id set. Call POST /api/central/current-tenant first."
+    },
+    "403_no_access": {
+      "http_status": 403,
+      "body": { "status": false, "message": "You do not have access to this tenant." },
+      "cause": "User is not the owner or a member of the active tenant."
+    },
+    "404_not_found": {
+      "http_status": 404,
+      "body": { "message": "No query results for model [ModelName] {id}" },
+      "cause": "The requested resource does not exist in the tenant database."
+    },
+    "422_validation": {
+      "http_status": 422,
+      "body": {
+        "message": "The field is required.",
+        "errors": { "field": ["The field is required."] }
+      },
+      "cause": "Request body failed validation."
+    },
+    "500_server_error": {
+      "http_status": 500,
+      "body": { "message": "Server Error" },
+      "cause": "Unexpected server-side error."
+    }
+  }
+}
