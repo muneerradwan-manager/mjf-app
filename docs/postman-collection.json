@@ -1,0 +1,876 @@
+{
+  "info": {
+    "name": "MJF App — Multi-Tenant Educational Platform",
+    "description": "Full API reference for the MJF multi-tenant educational platform.\n\nSetup:\n1. Set `base_url` variable to your server (default: http://localhost:8000)\n2. Call POST /api/login → copy the token into the `token` variable\n3. Call POST /api/central/current-tenant to select a tenant\n4. All /api/tenant/* routes are now ready to use",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000", "type": "string" },
+    { "key": "token",    "value": "",                      "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/health", "host": ["{{base_url}}"], "path": ["api", "health"] },
+            "description": "Check if the API is up and running."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Central — Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.data && json.data.token) {",
+                  "    pm.collectionVariables.set('token', json.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept",       "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"password123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api", "login"] },
+            "description": "Authenticate a central user. The test script automatically saves the returned token into the `token` collection variable."
+          }
+        },
+        {
+          "name": "Get Authenticated User (me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/me", "host": ["{{base_url}}"], "path": ["api", "me"] },
+            "description": "Returns the authenticated user with their active tenant and list of accessible tenants."
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/logout", "host": ["{{base_url}}"], "path": ["api", "logout"] },
+            "description": "Revokes the current Bearer token."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Central — Tenants",
+      "item": [
+        {
+          "name": "Create Tenant",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Al-Nour School\",\n  \"slug\": \"al-nour-school\",\n  \"code\": \"ALNOUR01\",\n  \"email\": \"info@alnour.edu\",\n  \"phone\": \"+966501234567\",\n  \"subscription_id\": 1,\n  \"type\": \"school\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/central/tenants", "host": ["{{base_url}}"], "path": ["api", "central", "tenants"] },
+            "description": "Creates a new tenant, provisions a dedicated database, and runs migrations. The authenticated user becomes the owner.\n\ntype: masjed | school | university"
+          }
+        },
+        {
+          "name": "Set Current Tenant",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenant_id\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/central/current-tenant", "host": ["{{base_url}}"], "path": ["api", "central", "current-tenant"] },
+            "description": "Sets the active tenant for the authenticated user. Required before calling any /api/tenant/* route."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tenant — Health",
+      "item": [
+        {
+          "name": "Tenant Health Check",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/health", "host": ["{{base_url}}"], "path": ["api", "tenant", "health"] },
+            "description": "Confirms the correct tenant database is active for the authenticated user."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tenant — Students",
+      "item": [
+        {
+          "name": "List Students",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/students", "host": ["{{base_url}}"], "path": ["api", "tenant", "students"] }
+          }
+        },
+        {
+          "name": "Create Student",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Khalid Ahmad\",\n  \"email\": \"khalid@school.edu\",\n  \"password\": \"password123\",\n  \"student_id_number\": \"STD-001\",\n  \"date_of_birth\": \"2005-03-15\",\n  \"address\": \"123 Main St\",\n  \"phone\": \"+966501111111\",\n  \"parent_name\": \"Ahmad Ali\",\n  \"parent_phone\": \"+966502222222\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/tenant/students", "host": ["{{base_url}}"], "path": ["api", "tenant", "students"] },
+            "description": "Creates a TenantUser of type 'student' and a linked student profile."
+          }
+        },
+        {
+          "name": "Get Student",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/students/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "students", "1"] }
+          }
+        },
+        {
+          "name": "Update Student",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Khalid Ahmad Updated\",\n  \"email\": \"khalid.new@school.edu\",\n  \"student_id_number\": \"STD-001\",\n  \"date_of_birth\": \"2005-03-15\",\n  \"address\": \"456 New St\",\n  \"phone\": \"+966503333333\",\n  \"parent_name\": \"Ahmad Ali\",\n  \"parent_phone\": \"+966504444444\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/tenant/students/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "students", "1"] },
+            "description": "Password field is optional on update."
+          }
+        },
+        {
+          "name": "Delete Student",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/students/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "students", "1"] },
+            "description": "Deletes the student and their linked TenantUser."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tenant — Teachers",
+      "item": [
+        {
+          "name": "List Teachers",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/teachers", "host": ["{{base_url}}"], "path": ["api", "tenant", "teachers"] }
+          }
+        },
+        {
+          "name": "Create Teacher",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sara Mohamed\",\n  \"email\": \"sara@school.edu\",\n  \"password\": \"password123\",\n  \"employee_id_number\": \"EMP-001\",\n  \"specialization\": \"Mathematics\",\n  \"bio\": \"Experienced math teacher\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/tenant/teachers", "host": ["{{base_url}}"], "path": ["api", "tenant", "teachers"] },
+            "description": "Creates a TenantUser of type 'teacher' and a linked teacher profile."
+          }
+        },
+        {
+          "name": "Get Teacher",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/teachers/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "teachers", "1"] }
+          }
+        },
+        {
+          "name": "Update Teacher",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sara Mohamed\",\n  \"email\": \"sara@school.edu\",\n  \"employee_id_number\": \"EMP-001\",\n  \"specialization\": \"Physics\",\n  \"bio\": \"Updated bio\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/tenant/teachers/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "teachers", "1"] }
+          }
+        },
+        {
+          "name": "Delete Teacher",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/teachers/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "teachers", "1"] },
+            "description": "Deletes the teacher and their linked TenantUser."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tenant — Courses",
+      "item": [
+        {
+          "name": "List Courses",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/courses", "host": ["{{base_url}}"], "path": ["api", "tenant", "courses"] }
+          }
+        },
+        {
+          "name": "Create Course",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Algebra\",\n  \"code\": \"MATH101\",\n  \"description\": \"Introduction to algebra\",\n  \"teacher_id\": 1,\n  \"status\": \"active\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/tenant/courses", "host": ["{{base_url}}"], "path": ["api", "tenant", "courses"] },
+            "description": "status: active | inactive | archived"
+          }
+        },
+        {
+          "name": "Get Course",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/courses/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "courses", "1"] }
+          }
+        },
+        {
+          "name": "Update Course",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Advanced Algebra\",\n  \"code\": \"MATH101\",\n  \"description\": \"Updated description\",\n  \"teacher_id\": 1,\n  \"status\": \"archived\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/tenant/courses/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "courses", "1"] }
+          }
+        },
+        {
+          "name": "Delete Course",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/courses/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "courses", "1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tenant — Classes",
+      "item": [
+        {
+          "name": "List Classes",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/classes", "host": ["{{base_url}}"], "path": ["api", "tenant", "classes"] }
+          }
+        },
+        {
+          "name": "Create Class",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Morning Group A\",\n  \"description\": \"Morning session\",\n  \"course_id\": 1,\n  \"teacher_id\": 1,\n  \"start_date\": \"2026-05-01\",\n  \"end_date\": \"2026-05-31\",\n  \"schedule\": [\n    { \"day\": \"monday\",    \"start\": \"08:00\", \"end\": \"10:00\" },\n    { \"day\": \"wednesday\", \"start\": \"08:00\", \"end\": \"10:00\" }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/tenant/classes", "host": ["{{base_url}}"], "path": ["api", "tenant", "classes"] }
+          }
+        },
+        {
+          "name": "Get Class",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/classes/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "classes", "1"] }
+          }
+        },
+        {
+          "name": "Update Class",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Evening Group B\",\n  \"description\": \"Evening session\",\n  \"course_id\": 1,\n  \"teacher_id\": 1,\n  \"start_date\": \"2026-06-01\",\n  \"end_date\": \"2026-06-30\",\n  \"schedule\": [\n    { \"day\": \"tuesday\", \"start\": \"18:00\", \"end\": \"20:00\" }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/tenant/classes/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "classes", "1"] }
+          }
+        },
+        {
+          "name": "Delete Class",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/classes/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "classes", "1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tenant — Enrollments",
+      "item": [
+        {
+          "name": "List Enrollments",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/enrollments", "host": ["{{base_url}}"], "path": ["api", "tenant", "enrollments"] }
+          }
+        },
+        {
+          "name": "Create Enrollment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": 1,\n  \"class_id\": 1,\n  \"enrollment_date\": \"2026-05-01\",\n  \"status\": \"active\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/tenant/enrollments", "host": ["{{base_url}}"], "path": ["api", "tenant", "enrollments"] },
+            "description": "Duplicate enrollment (same student + same class) returns 422.\n\nstatus: active | completed | dropped"
+          }
+        },
+        {
+          "name": "Get Enrollment",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/enrollments/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "enrollments", "1"] }
+          }
+        },
+        {
+          "name": "Update Enrollment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": 1,\n  \"class_id\": 1,\n  \"enrollment_date\": \"2026-05-01\",\n  \"status\": \"completed\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/tenant/enrollments/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "enrollments", "1"] }
+          }
+        },
+        {
+          "name": "Delete Enrollment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/enrollments/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "enrollments", "1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tenant — Assignments",
+      "item": [
+        {
+          "name": "List Assignments",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/assignments", "host": ["{{base_url}}"], "path": ["api", "tenant", "assignments"] }
+          }
+        },
+        {
+          "name": "Create Assignment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Chapter 1 Exercises\",\n  \"description\": \"Complete exercises 1-20\",\n  \"due_date\": \"2026-05-15 23:59:00\",\n  \"class_id\": 1,\n  \"teacher_id\": 1,\n  \"max_grade\": 100\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/tenant/assignments", "host": ["{{base_url}}"], "path": ["api", "tenant", "assignments"] }
+          }
+        },
+        {
+          "name": "Get Assignment",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/assignments/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "assignments", "1"] }
+          }
+        },
+        {
+          "name": "Update Assignment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Chapter 1 Exercises (Updated)\",\n  \"description\": \"Updated instructions\",\n  \"due_date\": \"2026-05-20 23:59:00\",\n  \"class_id\": 1,\n  \"teacher_id\": 1,\n  \"max_grade\": 50\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/tenant/assignments/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "assignments", "1"] }
+          }
+        },
+        {
+          "name": "Delete Assignment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/assignments/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "assignments", "1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tenant — Submissions",
+      "item": [
+        {
+          "name": "List Submissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/submissions", "host": ["{{base_url}}"], "path": ["api", "tenant", "submissions"] }
+          }
+        },
+        {
+          "name": "Create Submission",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignment_id\": 1,\n  \"student_id\": 1,\n  \"submission_date\": \"2026-05-14 20:00:00\",\n  \"content\": \"My answer to exercise 1...\",\n  \"file_path\": null,\n  \"grade\": null,\n  \"feedback\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/tenant/submissions", "host": ["{{base_url}}"], "path": ["api", "tenant", "submissions"] },
+            "description": "Student must be enrolled in the assignment's class. Grade cannot exceed the assignment's max_grade."
+          }
+        },
+        {
+          "name": "Get Submission",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/submissions/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "submissions", "1"] }
+          }
+        },
+        {
+          "name": "Update Submission",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignment_id\": 1,\n  \"student_id\": 1,\n  \"submission_date\": \"2026-05-14 20:00:00\",\n  \"content\": \"My answer...\",\n  \"file_path\": null,\n  \"grade\": 85,\n  \"feedback\": \"Well done!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/tenant/submissions/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "submissions", "1"] }
+          }
+        },
+        {
+          "name": "Delete Submission",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/submissions/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "submissions", "1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tenant — Grades",
+      "item": [
+        {
+          "name": "List Grades",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/grades", "host": ["{{base_url}}"], "path": ["api", "tenant", "grades"] }
+          }
+        },
+        {
+          "name": "Create Grade",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": 1,\n  \"course_id\": 1,\n  \"assignment_id\": 1,\n  \"grade\": 92.50,\n  \"comments\": \"Excellent performance\",\n  \"graded_by\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/tenant/grades", "host": ["{{base_url}}"], "path": ["api", "tenant", "grades"] },
+            "description": "Either course_id or assignment_id must be provided (or both). If both are given, the assignment must belong to the given course."
+          }
+        },
+        {
+          "name": "Get Grade",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/grades/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "grades", "1"] }
+          }
+        },
+        {
+          "name": "Update Grade",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": 1,\n  \"course_id\": 1,\n  \"assignment_id\": 1,\n  \"grade\": 95.00,\n  \"comments\": \"Updated comment\",\n  \"graded_by\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/tenant/grades/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "grades", "1"] }
+          }
+        },
+        {
+          "name": "Delete Grade",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/grades/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "grades", "1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tenant — Announcements",
+      "item": [
+        {
+          "name": "List Announcements",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/announcements", "host": ["{{base_url}}"], "path": ["api", "tenant", "announcements"] }
+          }
+        },
+        {
+          "name": "Create Announcement",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Welcome to the New Semester\",\n  \"content\": \"Dear students, welcome back!\",\n  \"created_by\": 1,\n  \"audience_type\": \"all\",\n  \"audience_id\": null,\n  \"published_at\": \"2026-05-01 09:00:00\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/tenant/announcements", "host": ["{{base_url}}"], "path": ["api", "tenant", "announcements"] },
+            "description": "audience_type: all | students | teachers | class\nIf audience_type is 'class', set audience_id to the target class ID."
+          }
+        },
+        {
+          "name": "Get Announcement",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/announcements/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "announcements", "1"] }
+          }
+        },
+        {
+          "name": "Update Announcement",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Announcement Title\",\n  \"content\": \"Updated content here.\",\n  \"created_by\": 1,\n  \"audience_type\": \"teachers\",\n  \"audience_id\": null,\n  \"published_at\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/tenant/announcements/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "announcements", "1"] }
+          }
+        },
+        {
+          "name": "Delete Announcement",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/announcements/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "announcements", "1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tenant — Events",
+      "item": [
+        {
+          "name": "List Events",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/events", "host": ["{{base_url}}"], "path": ["api", "tenant", "events"] }
+          }
+        },
+        {
+          "name": "Create Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Annual Science Fair\",\n  \"description\": \"Students showcase their projects\",\n  \"start_date\": \"2026-06-10 09:00:00\",\n  \"end_date\": \"2026-06-10 17:00:00\",\n  \"location\": \"Main Hall\",\n  \"created_by\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/tenant/events", "host": ["{{base_url}}"], "path": ["api", "tenant", "events"] },
+            "description": "end_date must be on or after start_date if provided."
+          }
+        },
+        {
+          "name": "Get Event",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/events/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "events", "1"] }
+          }
+        },
+        {
+          "name": "Update Event",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Annual Science Fair (Updated)\",\n  \"description\": \"Updated description\",\n  \"start_date\": \"2026-06-12 09:00:00\",\n  \"end_date\": \"2026-06-12 17:00:00\",\n  \"location\": \"Auditorium\",\n  \"created_by\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/tenant/events/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "events", "1"] }
+          }
+        },
+        {
+          "name": "Delete Event",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tenant/events/1", "host": ["{{base_url}}"], "path": ["api", "tenant", "events", "1"] }
+          }
+        }
+      ]
+    }
+  ]
+}
