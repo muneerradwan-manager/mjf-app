@@ -17,6 +17,9 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->boolean('is_super_admin')->default(false);
+            // FK to tenants added after tenants table is created (see 2026_04_15_060211 migration)
+            $table->unsignedBigInteger('current_tenant_id')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

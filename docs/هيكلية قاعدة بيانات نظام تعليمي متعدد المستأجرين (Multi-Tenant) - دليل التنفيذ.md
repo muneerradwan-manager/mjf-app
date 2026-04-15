@@ -1,5 +1,75 @@
 # هيكلية قاعدة بيانات نظام تعليمي متعدد المستأجرين (Multi-Tenant) - دليل التنفيذ
 
+---
+
+## حالة التنفيذ (Implementation Status) — آخر تحديث: 2026-04-15
+
+### ✅ المنجز (Completed)
+
+#### البنية التحتية (Infrastructure)
+- [x] مشروع Laravel 13 مُنشأ ومُهيأ
+- [x] حزمة `stancl/tenancy ^3.10` مثبتة ومُكوَّنة (نموذج "قاعدة بيانات لكل مستأجر")
+- [x] بنية وحدات (Modules) تحت `app/Modules/Central/` و `app/Shared/`
+- [x] نمط Repository مع `BaseRepository` / `BaseRepositoryInterface`
+- [x] مزودا خدمة `RepositoryServiceProvider` و `TenancyServiceProvider` مسجَّلان
+- [x] `bootstrap/app.php` مُهيأ مع مسارات API و معالجة JSON للاستثناءات
+
+#### قاعدة البيانات المركزية (Central Database — `mjf_app`)
+- [x] جدول `users` — مع `is_super_admin`, `current_tenant_id`
+- [x] جدول `subscriptions` — مع جميع الحقول المطلوبة + Seeder (Basic Plan)
+- [x] جدول `tenants` — مع `uuid`, `slug`, `code`, `db_name`, `type`, `owner_user_id`, `data` (لـ stancl)
+- [x] جدول `domains` — مرتبط بـ `tenants` (مطلوب من stancl/tenancy)
+- [x] جدول `tenant_user` — جدول pivot لربط المستخدمين بالمستأجرين
+- [x] FK مؤجلة: `users.current_tenant_id → tenants.id` (في migration منفصلة لتجنب الدائرية)
+
+#### توفير المستأجرين (Tenant Provisioning)
+- [x] `TenantProvisionService::createTenantWithDatabase()` — يُنشئ سجل المستأجر، قاعدة البيانات، ويشغّل migrations
+- [x] `Tenant` model مع تجاوز `getIncrementing()`, `getKeyType()`, `getCustomColumns()`, `getInternal('db_name')` لمتطلبات stancl
+- [x] إلغاء auto-jobs `CreateDatabase` / `MigrateDatabase` من event listeners (يتم التنفيذ يدوياً في الـ Service)
+
+#### قاعدة بيانات كل مستأجر (Tenant Database)
+- [x] Migration لجدول `users` (tenant) مع `type ENUM('student','teacher','admin')`
+- [x] كل مستأجر يحصل على قاعدة بيانات منفصلة باسم `tenant_xxxxxxxxxx`
+- [x] التحقق: 6 قواعد بيانات للمستأجرين مُنشأة وتحتوي على `migrations` و `users`
+
+#### API (Central)
+- [x] `POST /api/central/tenants` — إنشاء مستأجر جديد مع قاعدة بيانات ✅ **مختبر وناجح**
+- [x] `GET /api/health` — فحص حالة النظام
+- [x] معالجة صحيحة لـ JSON responses لجميع مسارات `/api/*`
+
+---
+
+### ⏳ المتبقي (Pending)
+
+#### قاعدة بيانات المستأجرين — الجداول المتبقية
+- [ ] `students` — جدول الطلاب + Migration + Model
+- [ ] `teachers` — جدول المعلمين + Migration + Model
+- [ ] `courses` — جدول المقررات + Migration + Model
+- [ ] `classes` — جدول الفصول + Migration + Model
+- [ ] `enrollments` — جدول التسجيلات + Migration + Model
+- [ ] `assignments` — جدول الواجبات + Migration + Model
+- [ ] `submissions` — جدول التسليمات + Migration + Model
+- [ ] `grades` — جدول الدرجات + Migration + Model
+- [ ] `announcements` — جدول الإعلانات + Migration + Model
+- [ ] `events` — جدول الأحداث + Migration + Model
+
+#### المصادقة والصلاحيات (Authentication & Authorization)
+- [ ] تسجيل الدخول للمستخدم المركزي (Login API)
+- [ ] Laravel Sanctum أو Passport
+- [ ] Middleware للتحقق من المستأجر النشط
+- [ ] ربط `owner_user_id` تلقائياً من `auth()->id()` (بدل إرساله في الطلب)
+
+#### API للمستأجرين (Tenant API)
+- [ ] مسارات `routes/tenant.php` للعمليات داخل قاعدة بيانات المستأجر
+- [ ] CRUD للطلاب، المعلمين، المقررات، الفصول
+- [ ] Middleware لتهيئة tenancy بناءً على المستأجر النشط
+
+#### ملاحظات تقنية
+- `db_user` و `db_password` في جدول `tenants` فارغان حالياً (يُستخدم مستخدم MySQL الرئيسي)
+- `APP_DEBUG=true` في `.env` — يجب تغييره لـ `false` في الإنتاج
+
+---
+
 ## 1. مقدمة
 
 يقدم هذا المستند تفصيلاً شاملاً لهيكلية قاعدة البيانات لنظام تعليمي يعتمد على مفهوم تعدد المستأجرين (Multi-Tenancy) باستخدام Laravel. الهدف هو توفير دليل تنفيذي واضح ومفصل لـ Agent برمجـي أو مطور، يوضح الجداول، الحقول، أنواع البيانات، القيود، والعلاقات بين الكيانات في كل من قاعدة البيانات المركزية وقواعد بيانات المستأجرين المنفصلة.
