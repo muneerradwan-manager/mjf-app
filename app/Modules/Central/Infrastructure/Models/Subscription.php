@@ -2,10 +2,13 @@
 
 namespace App\Modules\Central\Infrastructure\Models;
 
+use App\Shared\Infrastructure\Concerns\UsesCentralConnection;
 use Illuminate\Database\Eloquent\Model;
 
 class Subscription extends Model
 {
+    use UsesCentralConnection;
+
     protected $fillable = [
         'title',
         'description',

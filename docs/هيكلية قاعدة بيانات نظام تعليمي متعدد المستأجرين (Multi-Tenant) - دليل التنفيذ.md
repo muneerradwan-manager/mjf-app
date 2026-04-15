@@ -29,43 +29,54 @@
 
 #### قاعدة بيانات كل مستأجر (Tenant Database)
 - [x] Migration لجدول `users` (tenant) مع `type ENUM('student','teacher','admin')`
+- [x] Models + Migrations للجداول: `students`, `teachers`, `courses`, `classes`, `enrollments`, `assignments`, `submissions`, `grades`, `announcements`, `events`
 - [x] كل مستأجر يحصل على قاعدة بيانات منفصلة باسم `tenant_xxxxxxxxxx`
-- [x] التحقق: 6 قواعد بيانات للمستأجرين مُنشأة وتحتوي على `migrations` و `users`
+- [x] التحقق: تم تشغيل `php artisan tenants:migrate --force` بنجاح على المستأجر الحالي (`Tenant: 1`) وأصبحت قاعدة بياناته تحتوي على الجداول التعليمية كاملة
 
 #### API (Central)
 - [x] `POST /api/central/tenants` — إنشاء مستأجر جديد مع قاعدة بيانات ✅ **مختبر وناجح**
 - [x] `GET /api/health` — فحص حالة النظام
 - [x] معالجة صحيحة لـ JSON responses لجميع مسارات `/api/*`
+- [x] `POST /api/login` — تسجيل دخول المستخدم المركزي عبر `Laravel Sanctum`
+- [x] `POST /api/logout` — تسجيل خروج المستخدم وحذف الـ token الحالي
+- [x] `GET /api/me` — جلب بيانات المستخدم الحالي + المستأجر الحالي + قائمة المستأجرين المتاحين
+- [x] `POST /api/central/current-tenant` — تعيين `current_tenant_id` للمستخدم المسجل
+
+#### API (Tenant)
+- [x] تهيئة `routes/tenant.php` بمسار API حقيقي بدل placeholder route
+- [x] `InitializeTenancyByCurrentUser` — تهيئة tenancy من `auth()->user()->current_tenant_id`
+- [x] `EnsureActiveTenantAccess` — التحقق من وجود مستأجر نشط وصلاحية المستخدم عليه
+- [x] `GET /api/tenant/health` — فحص tenant context للمستخدم المسجل
+- [x] CRUD كامل للطلاب `students` مع `Requests`, `Resources`, `Controller`
+- [x] CRUD كامل للمعلمين `teachers` مع `Requests`, `Resources`, `Controller`
+- [x] CRUD كامل للمقررات `courses` مع `Requests`, `Resources`, `Controller`
+- [x] CRUD كامل للفصول `classes` مع `Requests`, `Resources`, `Controller`
+- [x] CRUD كامل للتسجيلات `enrollments` مع منع تكرار تسجيل نفس الطالب في نفس الفصل
+- [x] CRUD كامل للواجبات `assignments` مع ربطها بالفصل والمعلم
+- [x] CRUD كامل للتسليمات `submissions` مع التحقق من تسجيل الطالب في الفصل ومن الحد الأعلى للدرجة
+- [x] CRUD كامل للدرجات `grades` مع التحقق من الاتساق بين `course` و `assignment`
+- [x] اختبارات Feature لمسارات `students`, `teachers`, `courses`, `classes`, `enrollments`, `assignments`, `submissions`, `grades`
 
 ---
 
 ### ⏳ المتبقي (Pending)
 
-#### قاعدة بيانات المستأجرين — الجداول المتبقية
-- [ ] `students` — جدول الطلاب + Migration + Model
-- [ ] `teachers` — جدول المعلمين + Migration + Model
-- [ ] `courses` — جدول المقررات + Migration + Model
-- [ ] `classes` — جدول الفصول + Migration + Model
-- [ ] `enrollments` — جدول التسجيلات + Migration + Model
-- [ ] `assignments` — جدول الواجبات + Migration + Model
-- [ ] `submissions` — جدول التسليمات + Migration + Model
-- [ ] `grades` — جدول الدرجات + Migration + Model
-- [ ] `announcements` — جدول الإعلانات + Migration + Model
-- [ ] `events` — جدول الأحداث + Migration + Model
-
 #### المصادقة والصلاحيات (Authentication & Authorization)
-- [ ] تسجيل الدخول للمستخدم المركزي (Login API)
-- [ ] Laravel Sanctum أو Passport
-- [ ] Middleware للتحقق من المستأجر النشط
-- [ ] ربط `owner_user_id` تلقائياً من `auth()->id()` (بدل إرساله في الطلب)
+- [x] تسجيل الدخول للمستخدم المركزي (Login API)
+- [x] Laravel Sanctum
+- [x] Middleware للتحقق من المستأجر النشط
+- [x] ربط `owner_user_id` تلقائياً من `auth()->id()` (بدل إرساله في الطلب)
 
 #### API للمستأجرين (Tenant API)
-- [ ] مسارات `routes/tenant.php` للعمليات داخل قاعدة بيانات المستأجر
-- [ ] CRUD للطلاب، المعلمين، المقررات، الفصول
-- [ ] Middleware لتهيئة tenancy بناءً على المستأجر النشط
+- [ ] CRUD للإعلانات `announcements`
+- [ ] CRUD للأحداث `events`
+- [ ] تسجيل دخول مستقل لمستخدمي tenant إذا تقرر دعمه لاحقاً
 
 #### ملاحظات تقنية
 - `db_user` و `db_password` في جدول `tenants` فارغان حالياً (يُستخدم مستخدم MySQL الرئيسي)
+- حزمة `Sanctum` مفعّلة مع جدول `personal_access_tokens`
+- `User`, `Tenant`, `Subscription`, و `PersonalAccessToken` مثبتة على الاتصال المركزي لتعمل المصادقة المركزية داخل Tenant API
+- التحقق الحالي: `php artisan test` ✅ نجح بالكامل (`25 passed`)
 - `APP_DEBUG=true` في `.env` — يجب تغييره لـ `false` في الإنتاج
 
 ---
@@ -394,7 +405,7 @@
     *   يجب أن تكون هناك هجرات منفصلة لقاعدة البيانات المركزية.
     *   يجب أن تكون هناك هجرات خاصة بقواعد بيانات المستأجرين، والتي سيتم تشغيلها تلقائيًا عند إنشاء مستأجر جديد.
 3.  **الموديلات (Models):** تعريف الموديلات والعلاقات (Eloquent Relationships) لكل جدول في كلتا القاعدتين.
-4.  **المتحكمات (Controllers) والـ Middleware:** استخدام Middleware لتبديل اتصال قاعدة البيانات إلى قاعدة بيانات المستأجر الصحيحة بناءً على النطاق الفرعي (subdomain) أو أي معرف آخر للمستأجر في الطلب (request).
+4.  **المتحكمات (Controllers) والـ Middleware:** استخدام Middleware لتبديل اتصال قاعدة البيانات إلى قاعدة بيانات المستأجر الصحيحة بناءً على النطاق الفرعي (subdomain) أو `current_tenant_id` للمستخدم المسجل أو أي معرف آخر للمستأجر في الطلب (request).
 5.  **الأمان:** تشفير كلمات مرور قواعد البيانات الخاصة بالمستأجرين في جدول `tenants`، وتطبيق أفضل ممارسات الأمان في Laravel.
 6.  **توفير قواعد البيانات:** يجب أن تكون هناك آلية لإنشاء قواعد بيانات MySQL/PostgreSQL جديدة ديناميكيًا عند تسجيل مستأجر جديد، وتعيين المستخدمين وكلمات المرور لها.
 

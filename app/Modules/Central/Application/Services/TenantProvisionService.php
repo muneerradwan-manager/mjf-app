@@ -2,6 +2,7 @@
 
 namespace App\Modules\Central\Application\Services;
 
+use App\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use App\Modules\Central\Infrastructure\Models\Tenant;
@@ -11,6 +12,8 @@ class TenantProvisionService
 {
     public function createTenantWithDatabase(array $data): Tenant
     {
+        $ownerUserId = $data['owner_user_id'] ?? auth()->id();
+
         // Generate DB name upfront so it's stored on the tenant record
         $dbName = 'tenant_' . strtolower(Str::random(10));
 
@@ -23,7 +26,7 @@ class TenantProvisionService
             'email'           => $data['email'],
             'subscription_id' => $data['subscription_id'],
             'type'            => $data['type'],
-            'owner_user_id'   => $data['owner_user_id'] ?? auth()->id(),
+            'owner_user_id'   => $ownerUserId,
             'db_name'         => $dbName,
         ]);
 
@@ -41,6 +44,22 @@ class TenantProvisionService
 
         // 5. Return to central context
         tenancy()->end();
+
+        if ($ownerUserId) {
+            $owner = User::find($ownerUserId);
+
+            if ($owner) {
+                $owner->tenants()->syncWithoutDetaching([
+                    $tenant->getKey() => ['role' => 'admin'],
+                ]);
+
+                if ($owner->current_tenant_id === null) {
+                    $owner->forceFill([
+                        'current_tenant_id' => $tenant->getKey(),
+                    ])->save();
+                }
+            }
+        }
 
         return $tenant->fresh();
     }

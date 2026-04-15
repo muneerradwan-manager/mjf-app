@@ -3,6 +3,7 @@
 namespace App\Modules\Central\Infrastructure\Models;
 
 use App\Models\User;
+use App\Shared\Infrastructure\Concerns\UsesCentralConnection;
 use Stancl\Tenancy\Contracts\TenantWithDatabase;
 use Stancl\Tenancy\Database\Concerns\HasDatabase;
 use Stancl\Tenancy\Database\Concerns\HasDomains;
@@ -10,7 +11,7 @@ use Stancl\Tenancy\Database\Models\Tenant as BaseTenant;
 
 class Tenant extends BaseTenant implements TenantWithDatabase
 {
-    use HasDatabase, HasDomains;
+    use HasDatabase, HasDomains, UsesCentralConnection;
 
     // Use integer auto-increment PK instead of UUID string.
     // GeneratesIds overrides getIncrementing()/getKeyType() as methods, so we must

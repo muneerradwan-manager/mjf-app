@@ -8,7 +8,7 @@ class StoreTenantRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true; // later we secure it
+        return $this->user() !== null;
     }
 
     public function rules(): array
@@ -18,7 +18,6 @@ class StoreTenantRequest extends FormRequest
             'email'           => 'required|email|unique:tenants,email',
             'subscription_id' => 'required|exists:subscriptions,id',
             'type'            => 'required|in:masjed,school,university',
-            'owner_user_id'   => 'required|exists:users,id',
         ];
     }
 }
