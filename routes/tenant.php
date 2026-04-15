@@ -12,6 +12,8 @@ use App\Modules\Tenant\Presentation\Controllers\SubmissionController;
 use App\Modules\Tenant\Presentation\Controllers\TeacherController;
 use App\Modules\Tenant\Presentation\Controllers\ClassroomController;
 use App\Modules\Tenant\Presentation\Controllers\StudentController;
+use App\Modules\Tenant\Presentation\Controllers\AnnouncementController;
+use App\Modules\Tenant\Presentation\Controllers\EventController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -49,4 +51,6 @@ Route::prefix('api/tenant')->middleware([
     Route::apiResource('assignments', AssignmentController::class);
     Route::apiResource('submissions', SubmissionController::class);
     Route::apiResource('grades', GradeController::class);
+    Route::apiResource('announcements', AnnouncementController::class);
+    Route::apiResource('events', EventController::class);
 });

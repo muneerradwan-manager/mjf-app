@@ -33,19 +33,24 @@
 - [x] كل مستأجر يحصل على قاعدة بيانات منفصلة باسم `tenant_xxxxxxxxxx`
 - [x] التحقق: تم تشغيل `php artisan tenants:migrate --force` بنجاح على المستأجر الحالي (`Tenant: 1`) وأصبحت قاعدة بياناته تحتوي على الجداول التعليمية كاملة
 
+#### المصادقة والصلاحيات (Authentication & Authorization)
+- [x] تسجيل الدخول للمستخدم المركزي (Login API)
+- [x] Laravel Sanctum مع جدول `personal_access_tokens`
+- [x] `InitializeTenancyByCurrentUser` — Middleware لتهيئة tenancy من `current_tenant_id`
+- [x] `EnsureActiveTenantAccess` — Middleware للتحقق من وجود مستأجر نشط وصلاحية المستخدم عليه
+- [x] ربط `owner_user_id` تلقائياً من `auth()->id()` (بدل إرساله في الطلب)
+- [x] `User`, `Tenant`, `Subscription`, و `PersonalAccessToken` مثبتة على الاتصال المركزي لتعمل المصادقة المركزية داخل Tenant API
+
 #### API (Central)
-- [x] `POST /api/central/tenants` — إنشاء مستأجر جديد مع قاعدة بيانات ✅ **مختبر وناجح**
-- [x] `GET /api/health` — فحص حالة النظام
-- [x] معالجة صحيحة لـ JSON responses لجميع مسارات `/api/*`
 - [x] `POST /api/login` — تسجيل دخول المستخدم المركزي عبر `Laravel Sanctum`
 - [x] `POST /api/logout` — تسجيل خروج المستخدم وحذف الـ token الحالي
 - [x] `GET /api/me` — جلب بيانات المستخدم الحالي + المستأجر الحالي + قائمة المستأجرين المتاحين
+- [x] `POST /api/central/tenants` — إنشاء مستأجر جديد مع قاعدة بيانات ✅ **مختبر وناجح**
 - [x] `POST /api/central/current-tenant` — تعيين `current_tenant_id` للمستخدم المسجل
+- [x] `GET /api/health` — فحص حالة النظام
+- [x] معالجة صحيحة لـ JSON responses لجميع مسارات `/api/*`
 
 #### API (Tenant)
-- [x] تهيئة `routes/tenant.php` بمسار API حقيقي بدل placeholder route
-- [x] `InitializeTenancyByCurrentUser` — تهيئة tenancy من `auth()->user()->current_tenant_id`
-- [x] `EnsureActiveTenantAccess` — التحقق من وجود مستأجر نشط وصلاحية المستخدم عليه
 - [x] `GET /api/tenant/health` — فحص tenant context للمستخدم المسجل
 - [x] CRUD كامل للطلاب `students` مع `Requests`, `Resources`, `Controller`
 - [x] CRUD كامل للمعلمين `teachers` مع `Requests`, `Resources`, `Controller`
@@ -55,29 +60,19 @@
 - [x] CRUD كامل للواجبات `assignments` مع ربطها بالفصل والمعلم
 - [x] CRUD كامل للتسليمات `submissions` مع التحقق من تسجيل الطالب في الفصل ومن الحد الأعلى للدرجة
 - [x] CRUD كامل للدرجات `grades` مع التحقق من الاتساق بين `course` و `assignment`
-- [x] اختبارات Feature لمسارات `students`, `teachers`, `courses`, `classes`, `enrollments`, `assignments`, `submissions`, `grades`
+- [x] CRUD كامل للإعلانات `announcements` مع `Requests`, `Resources`, `Controller`
+- [x] CRUD كامل للأحداث `events` مع `Requests`, `Resources`, `Controller`
+- [x] اختبارات Feature لجميع مسارات Tenant API: `students`, `teachers`, `courses`, `classes`, `enrollments`, `assignments`, `submissions`, `grades`, `announcements`, `events`
 
 ---
 
-### ⏳ المتبقي (Pending)
-
-#### المصادقة والصلاحيات (Authentication & Authorization)
-- [x] تسجيل الدخول للمستخدم المركزي (Login API)
-- [x] Laravel Sanctum
-- [x] Middleware للتحقق من المستأجر النشط
-- [x] ربط `owner_user_id` تلقائياً من `auth()->id()` (بدل إرساله في الطلب)
-
-#### API للمستأجرين (Tenant API)
-- [ ] CRUD للإعلانات `announcements`
-- [ ] CRUD للأحداث `events`
-- [ ] تسجيل دخول مستقل لمستخدمي tenant إذا تقرر دعمه لاحقاً
+### ✅ اكتمل التنفيذ بالكامل — لا يوجد متبقٍ
 
 #### ملاحظات تقنية
 - `db_user` و `db_password` في جدول `tenants` فارغان حالياً (يُستخدم مستخدم MySQL الرئيسي)
-- حزمة `Sanctum` مفعّلة مع جدول `personal_access_tokens`
-- `User`, `Tenant`, `Subscription`, و `PersonalAccessToken` مثبتة على الاتصال المركزي لتعمل المصادقة المركزية داخل Tenant API
-- التحقق الحالي: `php artisan test` ✅ نجح بالكامل (`25 passed`)
+- التحقق الحالي: `php artisan test` ✅ نجح بالكامل (`33 passed, 167 assertions`)
 - `APP_DEBUG=true` في `.env` — يجب تغييره لـ `false` في الإنتاج
+- تسجيل دخول مستقل لمستخدمي tenant: غير مطلوب حالياً (مؤجل لقرار مستقبلي)
 
 ---
 
