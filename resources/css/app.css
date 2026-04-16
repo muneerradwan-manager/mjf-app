@@ -5,7 +5,199 @@
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
+/* Class-based dark mode */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Cairo', ui-sans-serif, system-ui, sans-serif;
+
+    /* Primary — Green / Gold brand palette */
+    --color-primary-50:  #f0faf9;
+    --color-primary-100: #E4DDD3;   /* lightGold  */
+    --color-primary-200: #D9C89D;   /* mediumGold */
+    --color-primary-300: #c9b47d;
+    --color-primary-400: #AC9E6F;   /* darkGold   */
+    --color-primary-500: #289E92;   /* lightGreen */
+    --color-primary-600: #016D5D;   /* mediumGreen */
+    --color-primary-700: #005a4d;
+    --color-primary-800: #004d42;
+    --color-primary-900: #003a31;
+    --color-primary-950: #00594F;   /* darkGreen  */
+}
+
+/* ─── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #D9C89D; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #AC9E6F; }
+
+/* ─── Utils ───────────────────────────────────────────────────────────────── */
+[x-cloak] { display: none !important; }
+
+/* ─── Sidebar ─────────────────────────────────────────────────────────────── */
+.sidebar-link {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+           text-primary-200 hover:bg-white/10 hover:text-white transition-all duration-150;
+}
+.sidebar-link.active {
+    @apply bg-white/15 text-white;
+}
+
+/* ─── Cards ───────────────────────────────────────────────────────────────── */
+.card {
+    @apply bg-white rounded-xl border border-slate-200 shadow-sm
+           dark:bg-slate-800 dark:border-slate-700;
+}
+
+/* ─── Buttons ─────────────────────────────────────────────────────────────── */
+.btn-primary {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+           transition-all duration-150 cursor-pointer
+           bg-primary-600 text-white hover:bg-primary-950 shadow-sm;
+}
+.btn-secondary {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+           transition-all duration-150 cursor-pointer
+           bg-white text-slate-700 border border-slate-200 hover:bg-primary-100 shadow-sm
+           dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-600;
+}
+.btn-danger {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+           transition-all duration-150 cursor-pointer
+           bg-red-600 text-white hover:bg-red-700 shadow-sm;
+}
+.btn-ghost {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+           transition-all duration-150 cursor-pointer
+           text-slate-600 hover:bg-primary-100
+           dark:text-slate-300 dark:hover:bg-slate-700;
+}
+.btn-sm {
+    @apply px-3 py-1.5 text-xs;
+}
+
+/* ─── Form controls ───────────────────────────────────────────────────────── */
+.form-label {
+    @apply block text-xs font-semibold text-slate-600 mb-1 uppercase tracking-wide
+           dark:text-slate-400;
+}
+.form-input {
+    @apply w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm
+           text-slate-900 placeholder:text-slate-400
+           focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500
+           transition-all duration-150 text-start
+           dark:bg-slate-700 dark:border-slate-600 dark:text-white dark:placeholder:text-slate-500
+           dark:focus:ring-primary-500/30 dark:focus:border-primary-500;
+}
+.form-input.error {
+    @apply border-red-400 focus:ring-red-400/30 focus:border-red-400;
+}
+.form-error {
+    @apply text-xs text-red-500 mt-1;
+}
+.form-select {
+    @apply w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm
+           text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/30
+           focus:border-primary-500 transition-all duration-150 appearance-none cursor-pointer
+           text-start dark:bg-slate-700 dark:border-slate-600 dark:text-white;
+}
+.form-textarea {
+    @apply w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm
+           text-slate-900 placeholder:text-slate-400
+           focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500
+           transition-all duration-150 resize-none text-start
+           dark:bg-slate-700 dark:border-slate-600 dark:text-white dark:placeholder:text-slate-500;
+}
+
+/* ─── Search input with icon ─────────────────────────────────────────────── */
+.search-wrapper {
+    @apply relative flex-1 max-w-xs;
+}
+.search-wrapper svg {
+    @apply absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none;
+}
+.search-wrapper input {
+    @apply ps-9;
+}
+
+/* ─── Table ───────────────────────────────────────────────────────────────── */
+.table-wrapper {
+    @apply overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700;
+}
+.data-table {
+    @apply w-full text-sm;
+}
+.data-table thead tr {
+    @apply bg-slate-50 border-b border-slate-200 dark:bg-slate-800/80 dark:border-slate-700;
+}
+.data-table thead th {
+    @apply px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap
+           dark:text-slate-400;
+}
+.data-table tbody tr {
+    @apply border-b border-slate-100 hover:bg-primary-50 transition-colors duration-100
+           dark:border-slate-700 dark:hover:bg-slate-700/40;
+}
+.data-table tbody tr:last-child { border-bottom: 0; }
+.data-table tbody td {
+    @apply px-4 py-3 text-slate-700 dark:text-slate-300;
+}
+
+/* ─── Badges ──────────────────────────────────────────────────────────────── */
+.badge-green  { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700; }
+.badge-blue   { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary-100 text-primary-600; }
+.badge-amber  { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700; }
+.badge-red    { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700; }
+.badge-slate  { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700; }
+
+/* ─── Modal ───────────────────────────────────────────────────────────────── */
+.modal-backdrop {
+    @apply absolute inset-0 bg-slate-900/60 backdrop-blur-sm;
+}
+.modal-panel {
+    @apply relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto z-10
+           dark:bg-slate-800;
+}
+.modal-panel-lg {
+    @apply relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto z-10
+           dark:bg-slate-800;
+}
+
+/* ─── Stat card ───────────────────────────────────────────────────────────── */
+.stat-card {
+    @apply bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-start gap-4
+           dark:bg-slate-800 dark:border-slate-700;
+}
+.stat-icon {
+    @apply w-12 h-12 rounded-xl flex items-center justify-center shrink-0;
+}
+
+/* ─── Page header ─────────────────────────────────────────────────────────── */
+.page-header {
+    @apply flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6;
+}
+.page-title {
+    @apply text-2xl font-bold text-slate-900 dark:text-white;
+}
+.page-subtitle {
+    @apply text-sm text-slate-500 mt-0.5 dark:text-slate-400;
+}
+
+/* ─── Empty state ─────────────────────────────────────────────────────────── */
+.empty-state {
+    @apply flex flex-col items-center justify-center py-16 text-center;
+}
+
+/* ─── Toast ───────────────────────────────────────────────────────────────── */
+.toast-success {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium min-w-64 max-w-sm
+           bg-primary-600 text-white border border-white/20;
+}
+.toast-error {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium min-w-64 max-w-sm
+           bg-red-600 text-white border border-white/20;
+}
+.toast-info {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium min-w-64 max-w-sm
+           bg-primary-500 text-white border border-white/20;
 }
