@@ -61,7 +61,7 @@
                                         </div>
                                     </td>
                                     <td class="font-mono text-xs" x-text="item.student_id_number ?? '—'"></td>
-                                    <td x-text="item.date_of_birth ?? '—'"></td>
+                                    <td x-text="formatDate(item.date_of_birth)"></td>
                                     <td x-text="item.phone ?? '—'"></td>
                                     <td>
                                         <div x-text="item.parent_name ?? '—'"></div>

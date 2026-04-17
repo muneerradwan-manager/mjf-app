@@ -1,9 +1,11 @@
 import Alpine from 'alpinejs';
 import persist from '@alpinejs/persist';
 import { api } from './api.js';
+import Chart from 'chart.js/auto';
 
 window.Alpine = Alpine;
 window.api = api;
+window.Chart = Chart;
 
 Alpine.plugin(persist);
 
@@ -71,6 +73,7 @@ Alpine.data('dashboard', () => ({
     },
 
     async loadAdminDashboard() {
+        const labels = JSON.parse(this.$el.dataset.labels);
         const [students, teachers, courses, classes, enrollments, assignments, announcements, events] = await Promise.all([
             api.get('/api/tenant/students'),
             api.get('/api/tenant/teachers'),
@@ -98,17 +101,18 @@ Alpine.data('dashboard', () => ({
             { bg: 'bg-rose-100',   color: 'text-rose-600'   },
         ];
         const counts = [
-            [students,    'Students'],
-            [teachers,    'Teachers'],
-            [courses,     'Courses'],
-            [classes,     'Classes'],
-            [enrollments, 'Enrollments'],
-            [assignments, 'Assignments'],
+            [students,    'students'],
+            [teachers,    'teachers'],
+            [courses,     'courses'],
+            [classes,     'classes'],
+            [enrollments, 'enrollments'],
+            [assignments, 'assignments'],
         ];
-        this.stats = counts.map(([res, label], i) => ({
+        this.stats = counts.map(([res, key], i) => ({
             value: res?.data?.length ?? 0,
-            label,
-            icon: icons[label.toLowerCase()],
+            label: labels[key],
+            route: `/${key}`,
+            icon: icons[key],
             ...colors[i],
         }));
         this.subtitle = `${students?.data?.length ?? 0} students · ${teachers?.data?.length ?? 0} teachers`;
@@ -119,6 +123,7 @@ Alpine.data('dashboard', () => ({
     },
 
     async loadTeacherDashboard() {
+        const labels = JSON.parse(this.$el.dataset.labels);
         const [classes, assignments, enrollments, announcements, events] = await Promise.all([
             api.get('/api/tenant/classes'),
             api.get('/api/tenant/assignments'),
@@ -141,9 +146,9 @@ Alpine.data('dashboard', () => ({
         ).size;
 
         this.stats = [
-            { value: this.myClasses.length,          label: 'My Classes',     icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', bg: 'bg-emerald-100', color: 'text-emerald-600' },
-            { value: this.upcomingAssignments.length, label: 'My Assignments', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z', bg: 'bg-indigo-100', color: 'text-indigo-600' },
-            { value: myStudentCount,                  label: 'My Students',   icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z', bg: 'bg-blue-100', color: 'text-blue-600' },
+            { value: this.myClasses.length,          label: labels.my_classes,     route: '/classes',     icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', bg: 'bg-emerald-100', color: 'text-emerald-600' },
+            { value: this.upcomingAssignments.length, label: labels.my_assignments, route: '/assignments', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z', bg: 'bg-indigo-100', color: 'text-indigo-600' },
+            { value: myStudentCount,                  label: labels.my_students,    route: '/students',    icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z', bg: 'bg-blue-100', color: 'text-blue-600' },
         ];
         this.subtitle             = `${this.myClasses.length} classes · ${myStudentCount} students`;
         this.recentAnnouncements  = (announcements?.data ?? []).slice(0, 4);
@@ -151,6 +156,7 @@ Alpine.data('dashboard', () => ({
     },
 
     async loadStudentDashboard() {
+        const labels = JSON.parse(this.$el.dataset.labels);
         const [enrollments, assignments, announcements, events] = await Promise.all([
             api.get('/api/tenant/enrollments'),
             api.get('/api/tenant/assignments'),
@@ -168,8 +174,8 @@ Alpine.data('dashboard', () => ({
             .slice(0, 6);
 
         this.stats = [
-            { value: this.myEnrollments.length,       label: 'Enrolled Classes',   icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', bg: 'bg-amber-100',  color: 'text-amber-600'  },
-            { value: this.upcomingAssignments.length,  label: 'Assignments Due',    icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z',                bg: 'bg-indigo-100', color: 'text-indigo-600' },
+            { value: this.myEnrollments.length,       label: labels.enrolled_classes,   route: '/classes',     icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', bg: 'bg-amber-100',  color: 'text-amber-600'  },
+            { value: this.upcomingAssignments.length,  label: labels.assignments_due,    route: '/assignments', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z',                bg: 'bg-indigo-100', color: 'text-indigo-600' },
         ];
         this.subtitle            = `${this.myEnrollments.length} enrolled classes`;
         this.recentAnnouncements = (announcements?.data ?? []).slice(0, 4);
@@ -177,13 +183,14 @@ Alpine.data('dashboard', () => ({
     },
 
     drawCharts(classes, enrollments) {
+        const labels = JSON.parse(this.$el.dataset.labels);
         const ctx1 = document.getElementById('enrollmentChart');
         if (ctx1) {
-            const labels = classes.slice(0, 8).map(c => c.name?.split('—')[0]?.trim() ?? c.name);
+            const classLabels = classes.slice(0, 8).map(c => c.name?.split('—')[0]?.trim() ?? c.name);
             const counts = classes.slice(0, 8).map(c => enrollments.filter(e => e.class_id === c.id).length);
             new Chart(ctx1, {
                 type: 'bar',
-                data: { labels, datasets: [{ label: 'Enrollments', data: counts, backgroundColor: 'rgba(1,109,93,0.75)', borderRadius: 6 }] },
+                data: { labels: classLabels, datasets: [{ label: labels.enrollments, data: counts, backgroundColor: 'rgba(1,109,93,0.75)', borderRadius: 6 }] },
                 options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } },
             });
         }
@@ -194,7 +201,7 @@ Alpine.data('dashboard', () => ({
             const dropped   = enrollments.filter(e => e.status === 'dropped').length;
             new Chart(ctx2, {
                 type: 'doughnut',
-                data: { labels: ['Active', 'Completed', 'Dropped'], datasets: [{ data: [active, completed, dropped], backgroundColor: ['#016D5D','#289E92','#AC9E6F'], borderWidth: 2, borderColor: '#fff' }] },
+                data: { labels: [labels.active, labels.completed, labels.dropped], datasets: [{ data: [active, completed, dropped], backgroundColor: ['#016D5D','#289E92','#AC9E6F'], borderWidth: 2, borderColor: '#fff' }] },
                 options: { responsive: true, cutout: '70%', plugins: { legend: { position: 'bottom' } } },
             });
         }
@@ -228,6 +235,12 @@ function crudPage(endpoint, emptyForm, rowFilter = null) {
             return list.filter(item =>
                 Object.values(item).some(v => String(v ?? '').toLowerCase().includes(q))
             );
+        },
+
+        formatDate(dateString) {
+            if (!dateString) return '—';
+            const date = new Date(dateString);
+            return date.toLocaleDateString();
         },
 
         async init() { await this.load(); },

@@ -1,28 +1,28 @@
-<x-layouts.app title="Announcements">
+<x-layouts.app :title="__('app.announcements')">
 <div x-data="announcementsPage()" x-init="init()" x-cloak>
 
     <div class="page-header">
         <div>
-            <h2 class="page-title">Announcements</h2>
-            <p class="page-subtitle" x-text="`${items.length} announcements`"></p>
+            <h2 class="page-title">{{ __('app.announcements') }}</h2>
+            <p class="page-subtitle" x-text="`${items.length} {{ __('app.announcements_subtitle', ['count' => '']) }}`.replace(/^\d+\s/, items.length + ' ')"></p>
         </div>
         <button x-show="canCreate" @click="openCreate()" class="btn-primary">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            New Announcement
+            {{ __('app.new_announcement') }}
         </button>
     </div>
 
     <div class="flex gap-3 mb-4">
-        <div class="relative flex-1 max-w-xs">
-            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            <input x-model="search" type="search" placeholder="Search announcements…" class="form-input pl-9">
+        <div class="search-wrapper">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input x-model="search" type="search" placeholder="{{ __('app.search') }}" class="form-input">
         </div>
     </div>
 
     <template x-if="loading">
         <div class="card p-12 text-center text-slate-400">
             <svg class="w-8 h-8 animate-spin mx-auto mb-3 text-indigo-400" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-            Loading…
+            {{ __('app.loading') }}
         </div>
     </template>
 
@@ -30,7 +30,7 @@
         <div class="space-y-4">
             <template x-if="filtered.length === 0">
                 <div class="card empty-state text-slate-400">
-                    <p class="font-medium text-slate-600">No announcements yet</p>
+                    <p class="font-medium text-slate-600">{{ __('app.no_announcements') }}</p>
                 </div>
             </template>
             <template x-for="item in filtered" :key="item.id">
@@ -45,11 +45,11 @@
                                 ></span>
                             </div>
                             <p class="text-sm text-slate-600 leading-relaxed line-clamp-3" x-text="item.content"></p>
-                            <p class="text-xs text-slate-400 mt-2" x-text="item.published_at ? 'Published: ' + new Date(item.published_at).toLocaleString() : 'Draft'"></p>
+                            <p class="text-xs text-slate-400 mt-2" x-text="item.published_at ? '{{ __('app.published') }}' + new Date(item.published_at).toLocaleString() : '{{ __('app.draft') }}'"></p>
                         </div>
                         <div class="flex gap-1 shrink-0">
-                            <button x-show="canWrite" @click="openEdit(item)" class="btn-ghost btn-sm text-indigo-600">Edit</button>
-                            <button x-show="canWrite" @click="confirmDelete(item.id)" class="btn-ghost btn-sm text-red-500">Delete</button>
+                            <button x-show="canWrite" @click="openEdit(item)" class="btn-ghost btn-sm text-indigo-600">{{ __('app.edit') }}</button>
+                            <button x-show="canWrite" @click="confirmDelete(item.id)" class="btn-ghost btn-sm text-red-500">{{ __('app.delete') }}</button>
                         </div>
                     </div>
                 </div>
@@ -62,31 +62,32 @@
             <div class="modal-backdrop" @click="showModal = false"></div>
             <div class="modal-panel" @click.stop>
                 <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-                    <h3 class="font-semibold text-slate-900" x-text="editingId ? 'Edit Announcement' : 'New Announcement'"></h3>
+                    <h3 class="font-semibold text-slate-900" x-text="editingId ? '{{ __('app.edit_announcement') }}' : '{{ __('app.new_announcement') }}'"></h3>
                     <button @click="showModal = false" class="text-slate-400 hover:text-slate-600"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
                 </div>
                 <div class="p-6 space-y-4">
                     <div>
-                        <label class="form-label">Title</label>
-                        <input x-model="form.title" type="text" class="form-input" placeholder="Announcement title…">
+                        <label class="form-label">{{ __('app.title') }}</label>
+                        <input x-model="form.title" type="text" class="form-input" placeholder="{{ __('app.title') }}">
                     </div>
                     <div>
-                        <label class="form-label">Content</label>
-                        <textarea x-model="form.content" rows="5" class="form-textarea" placeholder="Write your announcement…"></textarea>
+                        <label class="form-label">{{ __('app.content') }}</label>
+                        <textarea x-model="form.content" rows="5" class="form-textarea" placeholder="{{ __('app.content') }}"></textarea>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="form-label">Audience</label>
+                            <label class="form-label">{{ __('app.audience') }}</label>
                             <select x-model="form.audience_type" class="form-select">
-                                <template x-for="t in audienceTypes" :key="t">
-                                    <option :value="t" x-text="t.charAt(0).toUpperCase() + t.slice(1)"></option>
-                                </template>
+                                <option value="all">{{ __('app.audience_all') }}</option>
+                                <option value="students">{{ __('app.audience_students') }}</option>
+                                <option value="teachers">{{ __('app.audience_teachers') }}</option>
+                                <option value="class">{{ __('app.audience_class') }}</option>
                             </select>
                         </div>
                         <div x-show="form.audience_type === 'class'">
-                            <label class="form-label">Target Class</label>
+                            <label class="form-label">{{ __('app.target_class') }}</label>
                             <select x-model="form.audience_id" class="form-select">
-                                <option value="">Select class…</option>
+                                <option value="">{{ __('app.select_class') }}</option>
                                 <template x-for="c in classes" :key="c.id">
                                     <option :value="c.id" x-text="c.name"></option>
                                 </template>
@@ -94,13 +95,13 @@
                         </div>
                     </div>
                     <div>
-                        <label class="form-label">Publish Date & Time</label>
+                        <label class="form-label">{{ __('app.publish_datetime') }}</label>
                         <input x-model="form.published_at" type="datetime-local" class="form-input">
                     </div>
                 </div>
                 <div class="flex justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl">
-                    <button @click="showModal = false" class="btn-secondary">Cancel</button>
-                    <button @click="save()" class="btn-primary" x-text="editingId ? 'Save Changes' : 'Publish'"></button>
+                    <button @click="showModal = false" class="btn-secondary">{{ __('app.cancel') }}</button>
+                    <button @click="save()" class="btn-primary" x-text="editingId ? '{{ __('app.save_changes') }}' : '{{ __('app.publish') }}'"></button>
                 </div>
             </div>
         </div>

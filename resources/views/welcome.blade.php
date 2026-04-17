@@ -93,21 +93,20 @@
             </div>
         </div>
         <div class="bg-slate-50 dark:bg-slate-800 p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-            @foreach([['Students','👨‍🎓','15'],['Teachers','👩‍🏫','5'],['Courses','📚','5'],['Classes','📅','10']] as [$label,$emoji,$count])
+            @foreach(trans('app.dashboard_preview_cards') as $card)
             <div class="bg-white dark:bg-slate-700 rounded-xl border border-slate-200 dark:border-slate-600 p-4 shadow-sm">
-                <div class="text-2xl mb-2">{{ $emoji }}</div>
-                <div class="text-2xl font-bold text-slate-800 dark:text-white">{{ $count }}</div>
-                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ $label }}</div>
+                <div class="text-2xl mb-2">{{ $card[1] }}</div>
+                <div class="text-2xl font-bold text-slate-800 dark:text-white">{{ $card[2] }}</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ $card[0] }}</div>
             </div>
             @endforeach
         </div>
         <div class="bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 px-6 pb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            @foreach(trans('app.dashboard_preview_metrics') as $metric)
             <div class="bg-white dark:bg-slate-700 rounded-xl border border-slate-200 dark:border-slate-600 p-4 shadow-sm h-28 flex items-center justify-center gap-2 text-slate-400 dark:text-slate-500 text-sm">
-                <span class="text-2xl">📊</span> Enrollment by Class
+                <span class="text-2xl">{{ $metric[1] }}</span> {{ $metric[0] }}
             </div>
-            <div class="bg-white dark:bg-slate-700 rounded-xl border border-slate-200 dark:border-slate-600 p-4 shadow-sm h-28 flex items-center justify-center gap-2 text-slate-400 dark:text-slate-500 text-sm">
-                <span class="text-2xl">🍩</span> Enrollment Status
-            </div>
+            @endforeach
         </div>
     </div>
 </section>
@@ -120,21 +119,11 @@
             <p class="text-slate-500 dark:text-slate-400 text-lg">{{ __('app.features_subtitle') }}</p>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            @foreach([
-                ['Multi-Tenancy',         'Each school gets its own isolated database. Complete data separation guaranteed.', '🏛️'],
-                ['Student Management',    'Full student profiles with parent contacts, ID numbers, and academic history.',  '👨‍🎓'],
-                ['Teacher Profiles',      'Staff with specializations, employee IDs, and rich bio information.',            '👩‍🏫'],
-                ['Courses & Classes',     'Flexible course catalogue with multiple sections and weekly schedules.',          '📚'],
-                ['Enrollments',           'Enroll students in classes. Track active, completed, and dropped statuses.',     '📋'],
-                ['Assignments & Grading', 'Create assignments, collect submissions, record grades and feedback.',           '✏️'],
-                ['Announcements',         'Broadcast messages to all, students only, teachers only, or a single class.',   '📢'],
-                ['Events Calendar',       'Plan and publish school events with location, dates, and descriptions.',         '📅'],
-                ['Role-Based Access',     'Super admins, owners, teachers, and students — each with the right access.',    '🔐'],
-            ] as [$title, $desc, $icon])
+            @foreach(trans('app.features_list') as $feature)
             <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                <div class="text-3xl mb-3">{{ $icon }}</div>
-                <h3 class="font-semibold text-slate-800 dark:text-white mb-1.5">{{ $title }}</h3>
-                <p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">{{ $desc }}</p>
+                <div class="text-3xl mb-3">{{ $feature[2] }}</div>
+                <h3 class="font-semibold text-slate-800 dark:text-white mb-1.5">{{ $feature[0] }}</h3>
+                <p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">{{ $feature[1] }}</p>
             </div>
             @endforeach
         </div>
@@ -149,27 +138,23 @@
             <p class="text-slate-500 dark:text-slate-400 text-lg">{{ __('app.pricing_subtitle') }}</p>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            @foreach([
-                ['Basic',    'Free',     '/mo',  'For small mosques & community circles', ['Up to 50 students', '5 teachers', '1 GB storage', 'Core features'],                    false],
-                ['Standard', '$49.99',   '/mo',  'Full academic workflow for schools',    ['Up to 500 students', '50 teachers', '10 GB storage', 'Events & announcements'],         true],
-                ['Premium',  '$199.99',  '/yr',  'Unlimited for large institutions',      ['Unlimited students & teachers', '100 GB storage', 'API access', 'Priority support'],  false],
-            ] as [$name, $price, $period, $desc, $features, $featured])
-            <div class="rounded-2xl border p-7 flex flex-col {{ $featured ? 'border-[#016D5D] bg-[#016D5D] text-white shadow-xl shadow-[#016D5D]/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800' }}">
-                <p class="text-sm font-semibold {{ $featured ? 'text-[#D9C89D]' : 'text-[#016D5D] dark:text-[#289E92]' }}">{{ $name }}</p>
+            @foreach(trans('app.pricing_plans') as $plan)
+            <div class="rounded-2xl border p-7 flex flex-col {{ $plan[5] ? 'border-[#016D5D] bg-[#016D5D] text-white shadow-xl shadow-[#016D5D]/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800' }}">
+                <p class="text-sm font-semibold {{ $plan[5] ? 'text-[#D9C89D]' : 'text-[#016D5D] dark:text-[#289E92]' }}">{{ $plan[0] }}</p>
                 <div class="mt-3 flex items-end gap-1">
-                    <span class="text-4xl font-extrabold {{ $featured ? 'text-white' : 'text-slate-900 dark:text-white' }}">{{ $price }}</span>
-                    <span class="text-sm mb-1 {{ $featured ? 'text-[#D9C89D]' : 'text-slate-400 dark:text-slate-500' }}">{{ $period }}</span>
+                    <span class="text-4xl font-extrabold {{ $plan[5] ? 'text-white' : 'text-slate-900 dark:text-white' }}">{{ $plan[1] }}</span>
+                    <span class="text-sm mb-1 {{ $plan[5] ? 'text-[#D9C89D]' : 'text-slate-400 dark:text-slate-500' }}">{{ $plan[2] }}</span>
                 </div>
-                <p class="mt-2 text-sm {{ $featured ? 'text-[#E4DDD3]' : 'text-slate-500 dark:text-slate-400' }}">{{ $desc }}</p>
+                <p class="mt-2 text-sm {{ $plan[5] ? 'text-[#E4DDD3]' : 'text-slate-500 dark:text-slate-400' }}">{{ $plan[3] }}</p>
                 <ul class="mt-6 space-y-2.5 flex-1">
-                    @foreach($features as $f)
+                    @foreach($plan[4] as $feature)
                     <li class="flex items-center gap-2 text-sm">
-                        <svg class="w-4 h-4 shrink-0 {{ $featured ? 'text-[#D9C89D]' : 'text-emerald-500' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                        <span class="{{ $featured ? 'text-[#E4DDD3]' : 'text-slate-600 dark:text-slate-300' }}">{{ $f }}</span>
+                        <svg class="w-4 h-4 shrink-0 {{ $plan[5] ? 'text-[#D9C89D]' : 'text-emerald-500' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                        <span class="{{ $plan[5] ? 'text-[#E4DDD3]' : 'text-slate-600 dark:text-slate-300' }}">{{ $feature }}</span>
                     </li>
                     @endforeach
                 </ul>
-                <a href="{{ route('login') }}" class="mt-8 block text-center text-sm font-semibold py-2.5 rounded-xl transition-all duration-150 {{ $featured ? 'bg-white text-[#016D5D] hover:bg-[#E4DDD3]' : 'bg-[#016D5D] text-white hover:bg-[#00594F]' }}">
+                <a href="{{ route('login') }}" class="mt-8 block text-center text-sm font-semibold py-2.5 rounded-xl transition-all duration-150 {{ $plan[5] ? 'bg-white text-[#016D5D] hover:bg-[#E4DDD3]' : 'bg-[#016D5D] text-white hover:bg-[#00594F]' }}">
                     {{ __('app.get_started_free') }} →
                 </a>
             </div>
@@ -186,8 +171,8 @@
         <div class="bg-white/10 border border-white/20 rounded-xl p-5 mb-8 text-left max-w-sm mx-auto">
             <p class="text-[#D9C89D] text-xs font-semibold uppercase tracking-wider mb-3">{{ __('app.demo_credentials') }}</p>
             <div class="space-y-2 text-sm">
-                <div class="flex justify-between"><span class="text-[#AC9E6F]">Email</span><span class="text-white font-mono">admin@mjf.edu</span></div>
-                <div class="flex justify-between"><span class="text-[#AC9E6F]">Password</span><span class="text-white font-mono">password</span></div>
+                <div class="flex justify-between"><span class="text-[#AC9E6F]">{{ __('app.email') }}</span><span class="text-white font-mono">admin@mjf.edu</span></div>
+                <div class="flex justify-between"><span class="text-[#AC9E6F]">{{ __('app.password') }}</span><span class="text-white font-mono">password</span></div>
             </div>
         </div>
         <a href="{{ route('login') }}" class="inline-flex items-center gap-2 bg-[#289E92] hover:bg-[#D9C89D] text-white hover:text-[#00594F] font-bold px-8 py-3.5 rounded-xl transition-all duration-150 text-base">

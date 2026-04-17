@@ -56,6 +56,32 @@ return [
     'features_subtitle' => 'A complete academic management suite for any institution type.',
     'pricing_heading'   => 'Simple, transparent pricing',
     'pricing_subtitle'  => 'Start free. Scale as you grow.',
+    'features_list'     => [
+        ['Multi-Tenancy', 'Each school gets its own isolated database. Complete data separation guaranteed.', '🏛️'],
+        ['Student Management', 'Full student profiles with parent contacts, ID numbers, and academic history.', '👨‍🎓'],
+        ['Teacher Profiles', 'Staff with specializations, employee IDs, and rich bio information.', '👩‍🏫'],
+        ['Courses & Classes', 'Flexible course catalogue with multiple sections and weekly schedules.', '📚'],
+        ['Enrollments', 'Enroll students in classes. Track active, completed, and dropped statuses.', '📋'],
+        ['Assignments & Grading', 'Create assignments, collect submissions, record grades and feedback.', '✏️'],
+        ['Announcements', 'Broadcast messages to all, students only, teachers only, or a single class.', '📢'],
+        ['Events Calendar', 'Plan and publish school events with location, dates, and descriptions.', '📅'],
+        ['Role-Based Access', 'Super admins, owners, teachers, and students — each with the right access.', '🔐'],
+    ],
+    'dashboard_preview_cards' => [
+        ['Students', '👨‍🎓', '15'],
+        ['Teachers', '👩‍🏫', '5'],
+        ['Courses', '📚', '5'],
+        ['Classes', '📅', '10'],
+    ],
+    'dashboard_preview_metrics' => [
+        ['Enrollment by Class', '📊'],
+        ['Enrollment Status', '🍩'],
+    ],
+    'pricing_plans'     => [
+        ['Basic', 'Free', '/mo', 'For small mosques & community circles', ['Up to 50 students', '5 teachers', '1 GB storage', 'Core features'], false],
+        ['Standard', '$49.99', '/mo', 'Full academic workflow for schools', ['Up to 500 students', '50 teachers', '10 GB storage', 'Events & announcements'], true],
+        ['Premium', '$199.99', '/yr', 'Unlimited for large institutions', ['Unlimited students & teachers', '100 GB storage', 'API access', 'Priority support'], false],
+    ],
     'cta_heading'       => 'Ready to explore?',
     'cta_subtitle'      => 'Sign in with demo credentials and tour the full platform.',
     'demo_credentials'  => 'Demo Credentials',
@@ -217,6 +243,8 @@ return [
     'location'              => 'Location',
     'start_datetime'        => 'Start Date & Time',
     'end_datetime'          => 'End Date & Time',
+    'enrolled_classes'      => 'Enrolled Classes',
+    'assignments_due'       => 'Assignments Due',
 
     // ─── Theme / Language ─────────────────────────────────────────────────────
     'light_mode'        => 'Light mode',
